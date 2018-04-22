@@ -1,0 +1,19 @@
+{
+  "name": "oyatleebot",
+  "version": "0.0.1",
+  "description": "",
+  "main": "bot.js",
+  "dependencies": {
+    "koalanlp": "^1.3.3",
+    "node-telegram-bot-api": "^0.30.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "GPL-3.0",
+  "engines": {
+	"node": "6.11.0"
+  }
+}
