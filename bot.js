@@ -34,8 +34,8 @@ bot.on('message', (msg) => {
   const chatId = msg.chat.id
   
   const result = mfsjea.jeamfs(msg.text)
-  if(result.score/10 > msg.text.length/4) {
-    sendMessage(chatId, result.str + " (" + result.name + ")", {reply_to_message_id: msg.message_id})
+  if(result.score/10 > msg.text.length/3.5) {
+    sendMessage(chatId, '-> ' + result.str + ' (' + result.name + ')', {reply_to_message_id: msg.message_id})
   }
   
 })
