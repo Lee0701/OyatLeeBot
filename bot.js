@@ -1,4 +1,9 @@
 
+const http = require('http')
+http.createServer((req, res) => {
+  
+}).listen(process.env.PORT || 80)
+
 const TelegramBot = require('node-telegram-bot-api');
 
 const config = require('./config.js')
