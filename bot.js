@@ -15,6 +15,7 @@ const token = config.token
 const bot = new TelegramBot(token, {polling: true})
 
 const mfsjea = require('./mfsjea.js')
+const yet = require('./yethangul.js')
 
 const sendMessage = function(chatId, msg, options={}) {
   bot.sendChatAction(chatId, "typing")
@@ -24,9 +25,11 @@ const sendMessage = function(chatId, msg, options={}) {
   }, 151 * length)
 }
 
-bot.onText(new RegExp('@' + botId + ' (.*)'), (msg, match) => {
+bot.onText(new RegExp('/yet(@' + botId + ')? (.*)'), (msg, match) => {
   const chatId = msg.chat.id
-  const txt = match[1]
+  const txt = match[2]
+  
+  sendMessage(chatId, '-> ' + yet(txt), {reply_to_message_id: msg.message_id})
   
 })
 
