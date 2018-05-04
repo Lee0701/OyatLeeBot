@@ -33,9 +33,11 @@ bot.onText(new RegExp('@' + botId + ' (.*)'), (msg, match) => {
 bot.on('message', (msg) => {
   const chatId = msg.chat.id
   
+  const candidate = msg.text.replace(/[가-힣ㄱ-ㅎㅏ-ㅣᄀ-하-ᅵᆨ-ᇂ]/g, '')
+  
   if(mfsjea.count2350(msg.text) < msg.text.length/3) {
-    const result = mfsjea.jeamfs(msg.text)
-    if(result.score/10 > msg.text.length/3.5) {
+    const result = mfsjea.jeamfs(candidate)
+    if(result.score/10 > candidate.length/3.5) {
       sendMessage(chatId, '-> ' + result.str + ' (' + result.name + ')', {reply_to_message_id: msg.message_id})
     }
   }
