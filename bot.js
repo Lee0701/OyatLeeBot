@@ -25,12 +25,14 @@ const sendMessage = function(chatId, msg, options={}) {
   }, 151 * length)
 }
 
-bot.onText(new RegExp('/yet(@' + botId + ')? (.*)'), (msg, match) => {
+bot.onText(new RegExp('/yet(@' + botId + ')?( (.*))?'), (msg, match) => {
   const chatId = msg.chat.id
-  const txt = match[2]
-  
-  sendMessage(chatId, '-> ' + yet(txt), {reply_to_message_id: msg.message_id})
-  
+  if(msg.reply_to_message) {
+    sendMessage(chatId, '-> ' + yet(msg.reply_to_message.text), {reply_to_message_id: msg.message_id})
+  }
+  if(match[3]) {
+    sendMessage(chatId, '-> ' + yet(match[3]), {reply_to_message_id: msg.message_id})
+  }
 })
 
 bot.on('message', (msg) => {
