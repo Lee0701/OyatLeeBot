@@ -22,7 +22,7 @@ const sendMessage = function(chatId, msg, options={}) {
   const length = msg.normalize("NFD").length
   setTimeout(function() {
     bot.sendMessage(chatId, msg, options)
-  }, 151 * length)
+  }, 115 * length)
 }
 
 bot.onText(new RegExp('/yet(@' + botId + ')?( (.*))?'), (msg, match) => {
