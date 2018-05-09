@@ -25,13 +25,14 @@ const sendMessage = function(chatId, msg, options={}) {
   }, 115 * length)
 }
 
-bot.onText(new RegExp('/yet(@' + botId + ')?( (.*))?'), (msg, match) => {
+bot.onText(new RegExp('/(옛한글|옛|yethangul|yethangeul|yet)(@' + botId + ')?( (.*))?'), (msg, match) => {
   const chatId = msg.chat.id
+  const cand = match[4]
   if(msg.reply_to_message) {
-    sendMessage(chatId, '-> ' + yet(msg.reply_to_message.text), {reply_to_message_id: msg.message_id})
+    sendMessage(chatId, '-> ' + yet(msg.reply_to_message.text) + ' @' + msg.from.username, {reply_to_message_id: msg.reply_to_message.message_id})
   }
-  if(match[3]) {
-    sendMessage(chatId, '-> ' + yet(match[3]), {reply_to_message_id: msg.message_id})
+  if(cand) {
+    sendMessage(chatId, '-> ' + yet(cand), {reply_to_message_id: msg.message_id})
   }
 })
 
