@@ -25,6 +25,6 @@ const convertToCompatible = (str) => [...str].map(c => CONVERT_COMPAT[CONVERT_ST
 
 const combination = (c) => COMBINATION[c.substr(0, 2)] ? combination(COMBINATION[c.substr(0, 2)]+c.substr(2)) : c
 
-const composeYethangul = (str) => convertToCompatible(str.normalize('NFD')).replace(YETHANGUL_SYLLABLE_2, (match, cho, jung, jong) => combination(convertCompatibleCho(cho)) + combination(convertCompatibleJung(jung)) + combination(convertCompatibleJong(jong))).normalize('NFC')
+const composeYethangul = (str) => convertToCompatible(str.normalize('NFD')).replace(YETHANGUL_SYLLABLE_2, (match, cho, jung, jong) => combination(convertCompatibleCho(cho)) + combination(convertCompatibleJung(jung)) + combination(convertCompatibleJong(jong))).normalize('NFC').replace(/;/g, '')
 
 module.exports = composeYethangul
