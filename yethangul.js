@@ -9,6 +9,9 @@ const COMPAT_JUNG = 'ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡ�
 const CONVERT_CHO = 'ᄀᄁ ᄂ  ᄃᄄᄅ       ᄆᄇᄈ ᄉᄊᄋᄌᄍᄎᄏᄐᄑᄒ'
 const CONVERT_JONG = 'ᆨᆩᆪᆫᆬᆭᆮ ᆯᆰᆱᆲᆳᆴᆵᆶᆷᆸ ᆹᆺᆻᆼᆽ ᆾᆿᇀᇁᇂ'
 
+const CONVERT_COMPAT = COMPAT_CHO + COMPAT_JUNG + COMPAT_CHO
+const CONVERT_STD = CONVERT_CHO + STD_JUNG + CONVERT_JONG
+
 const YETHANGUL_SYLLABLE_3 = /([ᄀ-ᄒ]+)([ᅡ-ᅵ]+)([ᆨ-ᇂ]*)/g
 const YETHANGUL_SYLLABLE_2 = /([ㄱ-ㅎ]{1,3})([ㅏ-ㅣ]{1,3})([ㄱ-ㅎ]{0,3})(?![ㅏ-ㅣ])/g
 
@@ -18,8 +21,10 @@ const convertCompatibleCho = (c) => [...c].map(d => CONVERT_CHO[COMPAT_CHO.index
 const convertCompatibleJung = (c) => [...c].map(d => STD_JUNG[COMPAT_JUNG.indexOf(d)]).join('')
 const convertCompatibleJong = (c) => c === '' ? '' : [...c].map(d => CONVERT_JONG[COMPAT_CHO.indexOf(d)]).join('')
 
+const convertToCompatible = (str) => [...str].map(c => CONVERT_COMPAT[CONVERT_STD.indexOf(c)] || c).join('')
+
 const combination = (c) => COMBINATION[c.substr(0, 2)] ? combination(COMBINATION[c.substr(0, 2)]+c.substr(2)) : c
 
-const composeYethangul = (str) => str.replace(YETHANGUL_SYLLABLE_2, (match, cho, jung, jong) => combination(convertCompatibleCho(cho)) + combination(convertCompatibleJung(jung)) + combination(convertCompatibleJong(jong))).normalize('NFC')
+const composeYethangul = (str) => convertToCompatible(str.normalize('NFD')).replace(YETHANGUL_SYLLABLE_2, (match, cho, jung, jong) => combination(convertCompatibleCho(cho)) + combination(convertCompatibleJung(jung)) + combination(convertCompatibleJong(jong))).normalize('NFC')
 
 module.exports = composeYethangul
