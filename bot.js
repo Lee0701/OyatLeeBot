@@ -17,6 +17,8 @@ const bot = new TelegramBot(token, {polling: true})
 const mfsjea = require('./mfsjea.js')
 const yet = require('./yethangul.js')
 
+const yetCommands = '옛한글|옛|yethangul|yethangeul|yet'
+
 const sendMessage = function(chatId, msg, options={}) {
   bot.sendChatAction(chatId, "typing")
   const length = msg.normalize("NFD").length
@@ -26,7 +28,7 @@ const sendMessage = function(chatId, msg, options={}) {
   //}, 115 * length)
 }
 
-bot.onText(new RegExp('/(옛한글|옛|yethangul|yethangeul|yet)(@' + botId + ')?( (.*))?'), (msg, match) => {
+bot.onText(new RegExp('/(' + yetCommands + ')(@' + botId + ')?( (.*))?'), (msg, match) => {
   const chatId = msg.chat.id
   const cand = match[4]
   if(msg.reply_to_message) {
@@ -34,6 +36,24 @@ bot.onText(new RegExp('/(옛한글|옛|yethangul|yethangeul|yet)(@' + botId + ')
   }
   if(cand) {
     sendMessage(chatId, '-> ' + yet(cand), {reply_to_message_id: msg.message_id})
+  }
+})
+
+bot.on('inline_query', (query) => {
+  const match = new RegExp('(' + yetCommands + ') (.+)').exec(query.query)
+  if(match) {
+    const result = yet(match[2])
+    bot.answerInlineQuery(query.id, [{type: 'article', id: query.id, title: result, input_message_content: {message_text: result}}])
+  } else if(query.query.length > 0) {
+    const list = mfsjea.jeamfsList(query.query)
+    list.sort((a, b) => b.score - a.score)
+    let score = 0
+    let result = []
+    for(let i in list) {
+      if(list[i].score < score) break
+      result.push({type: 'article', id: i, title: list[i].str + ' (' + list[i].name + ')', input_message_content: {message_text: list[i].str}})
+    }
+    bot.answerInlineQuery(query.id, result)
   }
 })
 
