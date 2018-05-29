@@ -20,9 +20,10 @@ const yet = require('./yethangul.js')
 const sendMessage = function(chatId, msg, options={}) {
   bot.sendChatAction(chatId, "typing")
   const length = msg.normalize("NFD").length
-  setTimeout(function() {
-    bot.sendMessage(chatId, msg, options)
-  }, 115 * length)
+  bot.sendMessage(chatId, msg, options)
+  //setTimeout(function() {
+  //  bot.sendMessage(chatId, msg, options)
+  //}, 115 * length)
 }
 
 bot.onText(new RegExp('/(옛한글|옛|yethangul|yethangeul|yet)(@' + botId + ')?( (.*))?'), (msg, match) => {
