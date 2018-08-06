@@ -4,16 +4,20 @@
   "description": "",
   "main": "bot.js",
   "dependencies": {
-    "node-telegram-bot-api": "^0.30.0"
+    "ko-spellchecker": "^1.1.1",
+    "node-gyp": "^3.7.0",
+    "node-telegram-bot-api": "^0.30.0",
+    "node-twitter-korean-text": "^1.0.5",
+    "pg": "^7.4.3"
   },
   "devDependencies": {},
   "scripts": {
-	"start": "node bot.js",
+    "start": "node bot.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "GPL-3.0",
   "engines": {
-	"node": "6.11.0"
+    "node": "6.11.0"
   }
 }
