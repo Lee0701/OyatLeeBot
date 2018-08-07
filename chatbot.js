@@ -22,15 +22,15 @@ const learnSentence = function(tokens) {
   let tmp = []
   for(let i = 0 ; i < tokens.length ; i++) {
     tmp.push(tokens[i])
-    if(tmp.length >= SEARCH_LENGTH)
+    if(tmp.length >= SEQUENCE_LENGTH)
       tmp.splice(0, 1)
-    if(i < tokens.length-1) {
-      for(let j = 0 ; j < SEARCH_LENGTH-1 ; j++)
-        putSequence(dictionary, createSequence(tmp.slice(j, SEARCH_LENGTH)), tokens[i+1])
+    if(i < tokens.length) {
+      for(let j = 0 ; j < tmp.length-1 ; j++)
+        putSequence(dictionary, createSequence(tmp.slice(j, tmp.length-1)), tmp[tmp.length-1])
     }
-    if(i >= tmp.length) {
-      for(let j = tmp.length ; j >= 1; j--)
-        putSequence(reverseDictionary, createSequence(tmp.slice(0, j)), tokens[i-tmp.length])
+    if(i > 0) {
+      for(let j = tmp.length ; j > 1; j--)
+        putSequence(reverseDictionary, createSequence(tmp.slice(1, j)), tmp[0])
     }
   }
 }
@@ -43,16 +43,22 @@ const putSequence = (dict, key, value) => (dict[key]) ? (dict[key].includes(valu
 
 const searchSequence = (dict, key) => dict[key]
 
-const getKeywords = (phrases) => [].concat.apply([], phrases.map(phrase => tokenizeJson(phrase.text).map(token => token.text + ':' + token.koreanPos))).filter((elem, index, self) => index == self.indexOf(elem)).filter(keyWord => !NG_KEYWORD.includes(keyWord.substring(keyWord.indexOf(':')+1)))
+const getKeywords = (tokens) => tokens.filter(token => KEYWORD_POS.includes(token.koreanPos)).map(token => token.text + ':' + token.koreanPos)
 
-const NG_KEYWORD = ['Josa', 'Space', 'Eomi']
+const KEYWORD_POS = ['Noun', 'VerbPrefix', 'Verb', 'Adjective', 'Adverb', 'Alpha']
 
 const makeReply = function(text, learn=false, make=true) {
   if(learn && !make) {
     const split = text.split(/ ?\-\> ?/)
     if(split.length == 2) {
-      const fromKeyword = getKeywords(twtkr.extractPhrasesSync(tokenize(split[0])))
-      const toKeyword = getKeywords(twtkr.extractPhrasesSync(tokenize(split[1])))
+      const fromTokens = twtkr.tokensToJsonArraySync(tokenize(split[0]))
+      let fromKeyword = getKeywords(fromTokens)
+      if(fromKeyword.length == 0 || fromKeyword[0] == '')
+        fromKeyword = fromTokens.map(token => token.text + ':' + token.koreanPos)
+      const toTokens = twtkr.tokensToJsonArraySync(tokenize(split[1]))
+      let toKeyword = getKeywords(toTokens)
+      if(toKeyword.length == 0 || toKeyword[0] == '')
+        toKeyword = toTokens.map(token => token.text + ':' + token.koreanPos)
       learnKeywordMap(fromKeyword, toKeyword)
       text = split[1]
     }
@@ -60,18 +66,22 @@ const makeReply = function(text, learn=false, make=true) {
   
   const tokens = tokenize(text)
   const tokensJson = twtkr.tokensToJsonArraySync(tokens, true)
-  const phrases = twtkr.extractPhrasesSync(tokens)
   const tokenTexts = tokensJson.map(token => token.text + ':' + token.koreanPos)
+  
   if(learn)
     learnSentence(tokenTexts)
   
   if(!make)
     return
   
-  let keyWords = getKeywords(phrases)
+  let keyWords = getKeywords(tokensJson)
+  if(keyWords.length == 0 || keyWords[0] == '')
+    keyWords = tokensJson.map(token => token.text + ':' + token.koreanPos)
   const converted = keywordDictionary[keyWords.join(';')]
   if(converted != undefined)
     keyWords = converted[Math.round(Math.random() * (converted.length - 1))].split(';')
+  if(keyWords.length == 0 || keyWords[0] == '')
+    keyWords = tokensJson.map(token => token.text + ':' + token.koreanPos)
   
   let start
   let idx = 0
@@ -102,7 +112,7 @@ const makeReply = function(text, learn=false, make=true) {
       if(found != '')
         break
       else if(randomFound == '')
-        found = result[Math.round(Math.random() * (result.length - 1))]
+        randomFound = result[Math.round(Math.random() * (result.length - 1))]
     }
     if(found == '')
       found = randomFound
@@ -137,7 +147,7 @@ const makeReply = function(text, learn=false, make=true) {
       if(found != '')
         break
       else if(randomFound == '')
-        found = result[Math.round(Math.random() * (result.length - 1))]
+        randomFound = result[Math.round(Math.random() * (result.length - 1))]
     }
     if(found == '')
       found = randomFound
