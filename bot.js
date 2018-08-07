@@ -35,7 +35,7 @@ const MSG_LEARNING_NOT_ENABLED = 'ERROR: 학습 불가 그룹, Learning is not e
 const MSG_NOT_ADMIN = 'ERROR: 관리자 권한 필요, Admin privilege required.'
 const MSG_ACCESS_DENIED = 'ERROR: 접근 거부, Access denied.'
 
-const BOT_ADMIN = parseInt(process.env.BOT_ADMIN)
+const BOT_ADMIN = JSON.parse(process.env.BOT_ADMIN)
 
 pgClient.query('select * from "texts"', (err, res) => {
   if(err)
@@ -87,7 +87,7 @@ bot.onText(new RegExp('/(ch)(@' + botId + ')?( (.*))?'), (msg, match) => {
 bot.onText(new RegExp('/(chadmin)(@' + botId + ')?( (.*))?'), (msg, match) => {
   const chatId = msg.chat.id
   const text = match[4]
-  if(msg.from.id != BOT_ADMIN) {
+  if(!BOT_ADMIN.includes(msg.from.id)) {
     sendMessage(chatId, MSG_ACCESS_DENIED, {reply_to_message_id: msg.message_id})
     return
   }
