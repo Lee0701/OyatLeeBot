@@ -56,7 +56,7 @@ const sendMessage = function(chatId, msg, options={}) {
   //}, 115 * length)
 }
 
-bot.onText(new RegExp('/(ch)(@' + botId + ')?( (.*))?'), (msg, match) => {
+bot.onText(new RegExp('/(ch|챗)(@' + botId + ')?( (.*))?'), (msg, match) => {
   const chatId = msg.chat.id
   const text = match[4]
   if(text) {
