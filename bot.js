@@ -103,7 +103,7 @@ bot.onText(new RegExp('/(chadmin)(@' + botId + ')?( (.*))?'), (msg, match) => {
           list += row['text'] + ';'
         }
         learnTexts(list)
-        pgClient.query('insert into texts ("text") values (\'' + list + '\');', (err, res) => {
+        pgClient.query('insert into texts ("text") values ($1);', [list], (err, res) => {
           if(err)
             console.log(err)
         })
@@ -115,6 +115,13 @@ bot.onText(new RegExp('/(chadmin)(@' + botId + ')?( (.*))?'), (msg, match) => {
       })
     }
   }
+})
+
+bot.onText(new RegExp('/(flushrequest)(@' + botId + ')?( (.*))?'), (msg, match) => {
+  const text = 'New flush request from @' + msg.from.username + (match[4] ? ' : ' + match[4] : '')
+  
+  for(let id of BOT_ADMIN)
+    sendMessage(id, text)
 })
 
 const parseArgs = function(args) {
@@ -142,7 +149,7 @@ bot.onText(new RegExp('/(teach)(@' + botId + ')?( (.*))?'), (msg, match) => {
 })
 
 const insertText = function(text, username) {
-  pgClient.query('insert into learned ("text", "teacher") values (\'' + text + '\', \'' + username + '\');', (err, res) => {
+  pgClient.query('insert into learned ("text", "teacher") values ($1, $2);', [text, username], (err, res) => {
     if(err)
       console.log(err)
   })
@@ -187,6 +194,9 @@ bot.on('inline_query', (query) => {
 
 bot.on('message', (msg) => {
   const chatId = msg.chat.id
+  
+  if(!msg.text)
+    return
   
   if(msg.reply_to_message && msg.reply_to_message.from.username == botId) {
     sendMessage(chatId, chatbot.makeReply(msg.text), {reply_to_message_id: msg.message_id})
