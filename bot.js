@@ -93,26 +93,26 @@ bot.onText(new RegExp('/(chadmin)(@' + botId + ')?( (.*))?'), (msg, match) => {
   }
   const args = text.split(' ')
   if(text) {
-    if(args.length >= 2 && args[0] == 'list') {
-      pgClient.query('select text from learned where teacher=\'' + args[1] + '\';', (err, res) => {
+    if(args[0] == 'list') {
+      pgClient.query('select * from learned ' + parseArgs(args.slice(1)) + ';', (err, res) => {
         if(err)
           console.log(err)
-        let list = 'Texts learned from ' + args[1] + ':\n'
+        let list = 'Texts learned:\n'
         for(let row of res.rows) {
-          list += '- ' + row['text'] + '\n'
+          list += '- ' + row['text'] + ' by ' + row['teacher'] + '\n'
         }
         sendMessage(chatId, list, {reply_to_message_id: msg.message_id})
       })
     }
-    else if(args.length >= 2 && args[0] == 'purge') {
-      pgClient.query('delete from learned where teacher=\'' + args[1] + '\';', (err, res) => {
+    else if(args[0] == 'purge') {
+      pgClient.query('delete from learned ' + parseArgs(args.slice(1)) + ';', (err, res) => {
         if(err)
           console.log(err)
         sendMessage(chatId, 'Data purged.', {reply_to_message_id: msg.message_id})
       })
     }
-    else if(args.length >= 2 && args[0] == 'flush') {
-      pgClient.query('select text from learned where teacher=\'' + args[1] + '\';', (err, res) => {
+    else if(args[0] == 'flush') {
+      pgClient.query('select * from learned ' + parseArgs(args.slice(1)) + ';', (err, res) => {
         if(err)
           console.log(err)
         let list = ''
@@ -124,7 +124,7 @@ bot.onText(new RegExp('/(chadmin)(@' + botId + ')?( (.*))?'), (msg, match) => {
           if(err)
             console.log(err)
         })
-        pgClient.query('delete from learned where teacher=\'' + args[1] + '\';', (err, res) => {
+        pgClient.query('delete from learned ' + parseArgs(args.slice(1)) + ';', (err, res) => {
           if(err)
             console.log(err)
         })
@@ -133,6 +133,22 @@ bot.onText(new RegExp('/(chadmin)(@' + botId + ')?( (.*))?'), (msg, match) => {
     }
   }
 })
+
+const parseArgs = function(args) {
+  let result = 'where '
+  for(let i = 0 ; i < args.length ; i++) {
+    if(result != 'where ')
+      result += ' and '
+    if(args[i] == '-u' || args[i] == '--user') {
+      result += '"teacher"=\'' + args[++i] + '\''
+    } else if(args[i] == '-w' || args[i] == '--word' || args[i] == '--keyword') {
+      result += '"text" like \'%' + args[++i] + '%\''
+    }
+  }
+  if(result == 'where ')
+    result = ''
+  return result
+}
 
 bot.onText(new RegExp('/(teach)(@' + botId + ')?( (.*))?'), (msg, match) => {
   const chatId = msg.chat.id
