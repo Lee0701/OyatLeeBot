@@ -87,6 +87,7 @@ const makeReply = function(text, learn=false, make=true) {
     if(key.length >= SEARCH_LENGTH)
       key.pop()
     let found = ''
+    let randomFound = ''
     for(let j = key.length ; j >= 1; j--) {
       const result = searchSequence(reverseDictionary, createSequence(key.slice(0, j)))
       if(result == undefined)
@@ -98,11 +99,13 @@ const makeReply = function(text, learn=false, make=true) {
           return
         }
       })
-      if(found === '')
-        found = result[Math.round(Math.random() * (result.length - 1))]
       if(found != '')
         break
+      else if(randomFound == '')
+        found = result[Math.round(Math.random() * (result.length - 1))]
     }
+    if(found == '')
+      found = randomFound
     if(found == '')
       return '?'
     key.unshift(found)
@@ -119,6 +122,7 @@ const makeReply = function(text, learn=false, make=true) {
     while(key.length >= SEARCH_LENGTH)
       key.splice(0, 1)
     let found = ''
+    let randomFound = ''
     for(let j = 0 ; j < key.length ; j++) {
       const result = searchSequence(dictionary, createSequence(key.slice(j, key.length)))
       if(result == undefined)
@@ -130,11 +134,13 @@ const makeReply = function(text, learn=false, make=true) {
           return
         }
       })
-      if(found === '')
-        found = result[Math.round(Math.random() * (result.length - 1))]
       if(found != '')
         break
+      else if(randomFound == '')
+        found = result[Math.round(Math.random() * (result.length - 1))]
     }
+    if(found == '')
+      found = randomFound
     if(found == '')
       return '?'
     key.push(found)

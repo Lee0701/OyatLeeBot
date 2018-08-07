@@ -29,8 +29,6 @@ const chatbot = require('./chatbot.js')
 
 const yetCommands = '옛한글|옛|yethangul|yethangeul|yet'
 
-let learningRooms = []
-
 const MSG_LEARNING_NOT_ENABLED = 'ERROR: 학습 불가 그룹, Learning is not enabled for group.'
 const MSG_NOT_ADMIN = 'ERROR: 관리자 권한 필요, Admin privilege required.'
 const MSG_ACCESS_DENIED = 'ERROR: 접근 거부, Access denied.'
@@ -49,37 +47,19 @@ pgClient.query('select * from "texts"', (err, res) => {
 const sendMessage = function(chatId, msg, options={}) {
   bot.sendChatAction(chatId, "typing")
   const length = msg.normalize("NFD").length
-  bot.sendMessage(chatId, msg, options)
+  // bot.sendMessage(chatId, msg, options)
+  setTimeout(function() {
+   bot.sendMessage(chatId, msg, options)
+  }, 100)
   //setTimeout(function() {
   //  bot.sendMessage(chatId, msg, options)
   //}, 115 * length)
 }
 
-bot.onText(new RegExp('/(learn)(@' + botId + ')?( (.*))?'), (msg, match) => {
-  const chatId = msg.chat.id
-  const memberStatus = bot.getChatMember(chatId, msg.from.id).status
-  if(msg.chat.type != 'private' && memberStatus != 'administrator' && memberStatus != 'creator') {
-    sendMessage(chatId, MSG_NOT_ADMIN, {reply_to_message_id: msg.message_id})
-    return
-  }
-  if(match[4] == 'on') {
-    if(learningRooms.indexOf(chatId) == -1)
-      learningRooms.push(chatId)
-    sendMessage(chatId, 'LEARNING: On', {reply_to_message_id: msg.message_id})
-  } else if(match[4] == 'off') {
-    if(learningRooms.indexOf(chatId) != -1)
-      learningRooms.splice(learningRooms.indexOf(chatId), 1)
-    sendMessage(chatId, 'LEARNING: Off', {reply_to_message_id: msg.message_id})
-  }
-})
-
 bot.onText(new RegExp('/(ch)(@' + botId + ')?( (.*))?'), (msg, match) => {
   const chatId = msg.chat.id
   const text = match[4]
   if(text) {
-    const learn = learningRooms.includes(chatId)
-    if(learn)
-      insertText(text, msg.from.username)
     sendMessage(chatId, chatbot.makeReply(text), {reply_to_message_id: msg.message_id})
   }
 })
@@ -105,7 +85,10 @@ bot.onText(new RegExp('/(chadmin)(@' + botId + ')?( (.*))?'), (msg, match) => {
       })
     }
     else if(args[0] == 'purge') {
-      pgClient.query('delete from learned ' + parseArgs(args.slice(1)) + ';', (err, res) => {
+      const where = parseArgs(args.slice(1))
+      if(where == '' && args[1] != '*')
+        return
+      pgClient.query('delete from learned ' + where + ';', (err, res) => {
         if(err)
           console.log(err)
         sendMessage(chatId, 'Data purged.', {reply_to_message_id: msg.message_id})
@@ -153,7 +136,6 @@ const parseArgs = function(args) {
 bot.onText(new RegExp('/(teach)(@' + botId + ')?( (.*))?'), (msg, match) => {
   const chatId = msg.chat.id
   const text = match[4]
-  const learn = learningRooms.includes(chatId)
   if(text) {
     insertText(text, msg.from.username)
   }
@@ -206,8 +188,12 @@ bot.on('inline_query', (query) => {
 bot.on('message', (msg) => {
   const chatId = msg.chat.id
   
-  const candidate = msg.text.replace(/[가-힣ㄱ-ㅎㅏ-ㅣᄀ-하-ᅵᆨ-ᇂ]/g, '')
+  if(msg.reply_to_message && msg.reply_to_message.from.username == botId) {
+    sendMessage(chatId, chatbot.makeReply(msg.text), {reply_to_message_id: msg.message_id})
+    return
+  }
   
+  const candidate = msg.text.replace(/[가-힣ㄱ-ㅎㅏ-ㅣᄀ-하-ᅵᆨ-ᇂ]/g, '')
   if(mfsjea.count2350(msg.text) < msg.text.length/3) {
     const result = mfsjea.jeamfs(candidate)
     if(result.score/10 > candidate.length/3.5) {
