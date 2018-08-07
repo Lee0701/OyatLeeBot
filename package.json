@@ -4,7 +4,6 @@
   "description": "",
   "main": "bot.js",
   "dependencies": {
-    "ko-spellchecker": "^1.1.1",
     "node-gyp": "^3.7.0",
     "node-telegram-bot-api": "^0.30.0",
     "node-twitter-korean-text": "^1.0.5",
