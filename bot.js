@@ -1,23 +1,24 @@
 
+const config = require('./config.js')
+
 const fs = require('fs')
 const http = require('http')
 http.createServer((req, res) => {
   res.writeHead(200, {'Content-Type': 'text/plain'})
   res.write('')
   res.end()
-}).listen(process.env.PORT || 80)
+}).listen(config.port || 80)
 
 const {Client} = require('pg')
 
 const pgClient = new Client({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: config.databaseUrl,
   ssl: true,
 })
 pgClient.connect()
 
 const TelegramBot = require('node-telegram-bot-api');
 
-const config = require('./config.js')
 const botId = config.botId
 const token = config.token
 
@@ -33,7 +34,7 @@ const MSG_LEARNING_NOT_ENABLED = 'ERROR: 학습 불가 그룹, Learning is not e
 const MSG_NOT_ADMIN = 'ERROR: 관리자 권한 필요, Admin privilege required.'
 const MSG_ACCESS_DENIED = 'ERROR: 접근 거부, Access denied.'
 
-const BOT_ADMIN = JSON.parse(process.env.BOT_ADMIN)
+const BOT_ADMIN = JSON.parse(config.botAdmin)
 
 pgClient.query('select * from "texts"', (err, res) => {
   if(err)
