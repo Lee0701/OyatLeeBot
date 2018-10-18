@@ -113,6 +113,8 @@ const makeReply = function(text, learn=false, make=true) {
         break
       else if(randomFound == '')
         randomFound = result[Math.round(Math.random() * (result.length - 1))]
+      if(randomFound != '' && j <= 2)
+        break   // 말이 중복돼서 나오는 것 방지
     }
     if(found == '')
       found = randomFound
@@ -124,7 +126,7 @@ const makeReply = function(text, learn=false, make=true) {
     sentence.unshift(found)
   }
   
-  key = sentence.slice(sentence.length-SEARCH_LENGTH, sentence.length).filter(k => k != '')
+  key = sentence.slice((sentence.length > SEARCH_LENGTH) ? sentence.length-SEARCH_LENGTH : 0, sentence.length).filter(k => k != '')
   
   if(key == undefined) return '?'
   
@@ -148,6 +150,8 @@ const makeReply = function(text, learn=false, make=true) {
         break
       else if(randomFound == '')
         randomFound = result[Math.round(Math.random() * (result.length - 1))]
+      if(randomFound != '' && j <= 2)
+        break   // 말이 중복돼서 나오는 것 방지
     }
     if(found == '')
       found = randomFound
