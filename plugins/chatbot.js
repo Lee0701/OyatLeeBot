@@ -133,10 +133,10 @@ module.exports = function(botApi, botConfig) {
   config = botConfig
   BOT_ADMIN = JSON.parse(config.botAdmin)
   API.addListener(700, onMessage)
-  API.addCommand('ch|챗', onChat)
-  API.addCommand('teach', onTeach)
+  API.addCommand('ch|챗', onChat, '사용법: /ch <메시지>\n채팅봇에게 말을 겁니다.\nTIP: 봇의 메시지에 답장을 해도 대화할 수 있습니다.')
+  API.addCommand('teach', onTeach, '사용법: /teach (<질문> -> ) <답변>\n채팅봇에게 말을 가르칩니다.')
   API.addCommand('chadmin', onAdmin)
-  API.addCommand('flushrequest', onFlushRequest)
+  API.addCommand('flushrequest', onFlushRequest, '사용법: /flushrequest\n봇의 관리자에게 학습 확정 요청을 보냅니다.')
   
   pgClient = new Client({
     connectionString: config.databaseUrl,

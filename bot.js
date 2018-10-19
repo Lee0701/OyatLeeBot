@@ -11,18 +11,23 @@ const token = config.token
 
 const bot = new TelegramBot(token, {polling: true})
 
+const MSG_NO_HELP = 'ERROR: 해당 명령어에 대한 도움말을 찾을 수 없습니다, Help not found for this command.'
+
 let plugins = {}
 let listeners = {
   message: [],
-  inline: []
+  inline: [],
+  command: {}
 }
 
 const API = {
-  addCommand: function(command, callback) {
+  addCommand: function(command, callback, help) {
     bot.onText(new RegExp('^/(' + command + ')(@' + botId + ')?( (.*))?$'), callback)
+    listeners.command[command] = {callback: callback, help: help}
   },
   removeCommand: function(priority, command) {
     bot.removeTextListener(new RegExp('^/(' + command + ')(@' + botId + ')?( (.*))?$'))
+    delete listeners.command[command]
   },
   addInline: function(priority, callback) {
     if(!listeners.inline[priority])
@@ -84,6 +89,31 @@ bot.onText(new RegExp('^/(plugins)(@' + botId + ')?$'), (msg, match) => {
   let result = 'Installed plugins:'
   for(let key in plugins) {
     result += '\n- ' + key
+  }
+  API.sendMessage(msg.chat.id, result, {reply_to_message_id: msg.message_id})
+})
+
+bot.onText(new RegExp('^/(help)(@' + botId + ')?( (.*))?$'), (msg, match) => {
+  const command = match[4]
+  let result = ''
+  if(command) {
+    for(let cmd in listeners.command) {
+      if(new RegExp('^(' + cmd + ')$').exec(command)) {
+        const help = listeners.command[cmd].help
+        if(help) {
+          result += help
+        } else {
+          result += MSG_NO_HELP
+        }
+        break
+      }
+    }
+  } else {
+    result += '사용법, Usage: /help@' + botId + ' <command>\n'
+    result += '명령어 목록, Commands list:'
+    for(let cmd in listeners.command) {
+      result += '\n- ' + cmd
+    }
   }
   API.sendMessage(msg.chat.id, result, {reply_to_message_id: msg.message_id})
 })
