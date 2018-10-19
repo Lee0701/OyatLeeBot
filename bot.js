@@ -34,10 +34,10 @@ const bot = new TelegramBot(token, {polling: true})
 
 const API = {
   addCommand: function(command, callback) {
-    bot.onText(new RegExp('/(' + command + ')(@' + botId + ')?( (.*))?'), callback)
+    bot.onText(new RegExp('^/(' + command + ')(@' + botId + ')?( (.*))?$'), callback)
   },
   removeCommand: function(priority, command) {
-    bot.removeTextListener(new RegExp('/(' + command + ')(@' + botId + ')?( (.*))?'))
+    bot.removeTextListener(new RegExp('^/(' + command + ')(@' + botId + ')?( (.*))?$'))
   },
   addInline: function(priority, callback) {
     if(!listeners.inline[priority])
@@ -61,7 +61,7 @@ const API = {
       const length = msg.normalize("NFD").length
       setTimeout(function() {
         bot.sendMessage(chatId, msg, options)
-      }, 115 * length)
+      }, 109 * length)  // 2018년 10월 20일 기준 리의 평균 타속: 분당 550타
     } else {
       bot.sendMessage(chatId, msg, options)
     }
@@ -95,7 +95,7 @@ bot.on('message', (msg) => {
   }
 })
 
-bot.onText(new RegExp('/(plugins)(@' + botId + ')?( (.*))?'), (msg, match) => {
+bot.onText(new RegExp('^/(plugins)(@' + botId + ')?$'), (msg, match) => {
   let result = 'Installed plugins:'
   for(let key in plugins) {
     result += '\n- ' + key
