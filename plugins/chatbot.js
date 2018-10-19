@@ -1,30 +1,16 @@
 
-const config = require('../config.js')
 const chatbot = require('./chatbot/chatbot.js')
+
+let config = undefined
+let BOT_ADMIN = []
 
 let API = undefined
 const {Client} = require('pg')
+let pgClient = undefined
 
 const MSG_LEARNING_NOT_ENABLED = 'ERROR: 학습 불가 그룹, Learning is not enabled for group.'
 const MSG_NOT_ADMIN = 'ERROR: 관리자 권한 필요, Admin privilege required.'
 const MSG_ACCESS_DENIED = 'ERROR: 접근 거부, Access denied.'
-
-const BOT_ADMIN = JSON.parse(config.botAdmin)
-
-const pgClient = new Client({
-  connectionString: config.databaseUrl,
-  ssl: true,
-})
-pgClient.connect()
-
-pgClient.query('select * from "texts"', (err, res) => {
-  if(err)
-    console.log(err)
-  for(let row of res.rows) {
-    learnTexts(row['text'])
-  }
-  console.log('learning complete.')
-})
 
 const parseArgs = function(args) {
   let result = 'where '
@@ -142,11 +128,29 @@ const onFlushRequest = function(msg, match) {
     API.sendMessage(id, text)
 }
 
-module.exports = function(botApi) {
+module.exports = function(botApi, botConfig) {
   API = botApi
+  config = botConfig
+  BOT_ADMIN = JSON.parse(config.botAdmin)
   API.addListener(700, onMessage)
   API.addCommand('ch|챗', onChat)
   API.addCommand('teach', onTeach)
   API.addCommand('chadmin', onAdmin)
   API.addCommand('flushrequest', onFlushRequest)
+  
+  pgClient = new Client({
+    connectionString: config.databaseUrl,
+    ssl: true,
+  })
+  pgClient.connect()
+
+  pgClient.query('select * from "texts"', (err, res) => {
+    if(err)
+      console.log(err)
+    for(let row of res.rows) {
+      learnTexts(row['text'])
+    }
+    console.log('learning complete.')
+  })
+
 }

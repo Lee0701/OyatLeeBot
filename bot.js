@@ -74,7 +74,7 @@ const API = {
 const registerPlugin = function(name) {
   const plugin = require(config.pluginDir + name)
   plugins[name] = plugin
-  plugin(API)
+  plugin(API, config)
 }
 
 bot.on('inline_query', (query) => {
