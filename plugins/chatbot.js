@@ -60,8 +60,19 @@ const learnTexts = function(texts) {
 const onChat = function(msg, match) {
   const text = match[4]
   if(text) {
-    API.sendMessage(msg.chat.id, chatbot.makeReply(text), {reply_to_message_id: msg.message_id})
+    API.sendMessage(msg.chat.id, chatbot.makeReply(text), {reply_to_message_id: msg.message_id}, true)
   }
+}
+
+const onMessage = function(msg) {    
+  if(!msg.text)
+    return false
+  
+  if(msg.reply_to_message && msg.reply_to_message.from.username == config.botId) {
+    API.sendMessage(msg.chat.id, chatbot.makeReply(msg.text), {reply_to_message_id: msg.message_id}, true)
+    return true
+  }
+  return false
 }
 
 const onTeach = function(msg, match) {
@@ -129,17 +140,6 @@ const onFlushRequest = function(msg, match) {
   
   for(let id of BOT_ADMIN)
     API.sendMessage(id, text)
-}
-
-const onMessage = function(msg) {    
-  if(!msg.text)
-    return false
-  
-  if(msg.reply_to_message && msg.reply_to_message.from.username == config.botId) {
-    API.sendMessage(msg.chat.id, chatbot.makeReply(msg.text), {reply_to_message_id: msg.message_id})
-    return true
-  }
-  return false
 }
 
 module.exports = function(botApi) {
