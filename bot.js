@@ -33,16 +33,38 @@ const token = config.token
 const bot = new TelegramBot(token, {polling: true})
 
 const API = {
-  sendMessage: function(chatId, msg, options={}) {
-    bot.sendChatAction(chatId, "typing")
-    const length = msg.normalize("NFD").length
-    // bot.sendMessage(chatId, msg, options)
-    setTimeout(function() {
-     bot.sendMessage(chatId, msg, options)
-    }, 100)
-    //setTimeout(function() {
-    //  bot.sendMessage(chatId, msg, options)
-    //}, 115 * length)
+  addCommand: function(command, callback) {
+    bot.onText(new RegExp('/(' + command + ')(@' + botId + ')?( (.*))?'), callback)
+  },
+  removeCommand: function(priority, command) {
+    bot.removeTextListener(new RegExp('/(' + command + ')(@' + botId + ')?( (.*))?'))
+  },
+  addInline: function(priority, callback) {
+    if(!listeners.inline[priority])
+      listeners.inline[priority] = []
+    listeners.inline[priority].push(callback)
+  },
+  removeInline: function(priority, callback) {
+    listeners.inline[priority].splice(listeners.inline[priority].indexOf(callback), 1)
+  },
+  addListener: function(priority, callback) {
+    if(!listeners.message[priority])
+      listeners.message[priority] = []
+    listeners.message[priority].push(callback)
+  },
+  removeListener: function(priority, callback) {
+    listeners.message[priority].splice(listeners.message[priority].indexOf(callback), 1)
+  },
+  sendMessage: function(chatId, msg, options={}, delayed=false) {
+    bot.sendChatAction(chatId, 'typing')
+    if(delayed) {
+      const length = msg.normalize("NFD").length
+      setTimeout(function() {
+        bot.sendMessage(chatId, msg, options)
+      }, 115 * length)
+    } else {
+      bot.sendMessage(chatId, msg, options)
+    }
   },
   answerInlineQuery: function(id, result) {
     bot.answerInlineQuery(id, result)
@@ -52,37 +74,25 @@ const API = {
 const registerPlugin = function(name) {
   const plugin = require(config.pluginDir + name)
   plugins[name] = plugin
-  if(plugin.setup) {
-    plugin.setup(API)
-  }
-  if(plugin.message) {
-    listeners.message.push(plugin.message)
-  }
-  if(plugin.inline) {
-    listeners.inline.push(plugin.inline)
-  }
-  if(plugin.commands) {
-    plugin.commands.forEach(command => {
-      bot.onText(new RegExp('/(' + command.cmd + ')(@' + botId + ')?( (.*))?'), command.callback)
-    })
-  }
+  plugin(API)
 }
 
 bot.on('inline_query', (query) => {
-  for(listener of listeners.inline) {
-    if(listener(query))
-      return
+  for(let i in listeners.inline) {
+    for(let listener of listeners.inline[i]) {
+      if(listener(query))
+        return
+    }
   }
 })
 
 bot.on('message', (msg) => {
-  const chatId = msg.chat.id
-  
-  for(listener of listeners.message) {
-    if(listener(msg))
-      return
+  for(let i in listeners.message) {
+    for(let listener of listeners.message[i]) {
+      if(listener(msg))
+        return
+    }
   }
-  
 })
 
 bot.onText(new RegExp('/(plugins)(@' + botId + ')?( (.*))?'), (msg, match) => {

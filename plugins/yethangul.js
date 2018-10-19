@@ -25,10 +25,8 @@ const onInline = function(query) {
   return false
 }
 
-module.exports = {
-  setup: function(botApi) {
-    API = botApi
-  },
-  commands: [{cmd: yetCommands, callback: onYet}],
-  inline: onInline
+module.exports = function(botApi) {
+  API = botApi
+  API.addCommand(yetCommands, onYet)
+  API.addInline(1000, onInline)
 }

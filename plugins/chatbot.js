@@ -133,19 +133,20 @@ const onFlushRequest = function(msg, match) {
 
 const onMessage = function(msg) {    
   if(!msg.text)
-    return
+    return false
   
-  if(msg.reply_to_message && msg.reply_to_message.from.username == botId) {
-    API.sendMessage(chatId, chatbot.makeReply(msg.text), {reply_to_message_id: msg.message_id})
+  if(msg.reply_to_message && msg.reply_to_message.from.username == config.botId) {
+    API.sendMessage(msg.chat.id, chatbot.makeReply(msg.text), {reply_to_message_id: msg.message_id})
     return true
   }
   return false
 }
 
-module.exports = {
-  setup: function(botApi) {
-    API = botApi
-  },
-  commands: [{cmd: 'ch|챗', callback: onChat}, {cmd: 'teach', callback: onTeach}, {cmd: 'chadmin', callback: onAdmin}, {cmd: 'flushrequest', callback: onFlushRequest}],
-  message: onMessage
+module.exports = function(botApi) {
+  API = botApi
+  API.addListener(700, onMessage)
+  API.addCommand('ch|챗', onChat)
+  API.addCommand('teach', onTeach)
+  API.addCommand('chadmin', onAdmin)
+  API.addCommand('flushrequest', onFlushRequest)
 }

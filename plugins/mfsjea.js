@@ -5,7 +5,7 @@ const mfsjea = require('./mfsjea/mfsjea.js')
 
 const onMessage = function(msg) {
   if(!msg.text)
-    return
+    return false
   
   const candidate = msg.text.replace(/[가-힣ㄱ-ㅎㅏ-ㅣᄀ-하-ᅵᆨ-ᇂ]/g, '')
   if(mfsjea.count2350(msg.text) < msg.text.length/3) {
@@ -36,10 +36,8 @@ const onInline = function(query) {
   return false
 }
 
-module.exports = {
-  setup: function(botAPI) {
-    API = botAPI
-  },
-  message: onMessage,
-  inline: onInline
+module.exports = function(botApi) {
+  API = botApi
+  API.addListener(1000, onMessage)
+  API.addInline(1000, onInline)
 }
