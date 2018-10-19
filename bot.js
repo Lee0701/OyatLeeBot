@@ -1,29 +1,8 @@
 
 const config = require('./config.js')
 
-const fs = require('fs')
 const http = require('http')
-http.createServer((req, res) => {
-  res.writeHead(200, {'Content-Type': 'text/plain'})
-  res.write('')
-  res.end()
-}).listen(config.port || 80)
-
-fs.readdir(config.pluginDir, (err, files) => {
-  if(err)
-    return
-  files.forEach(file => {
-    if(file.endsWith('.js'))
-      registerPlugin(file)
-  })
-})
-
-let plugins = {}
-
-let listeners = {
-  message: [],
-  inline: []
-}
+const fs = require('fs')
 
 const TelegramBot = require('node-telegram-bot-api');
 
@@ -31,6 +10,12 @@ const botId = config.botId
 const token = config.token
 
 const bot = new TelegramBot(token, {polling: true})
+
+let plugins = {}
+let listeners = {
+  message: [],
+  inline: []
+}
 
 const API = {
   addCommand: function(command, callback) {
@@ -101,4 +86,21 @@ bot.onText(new RegExp('^/(plugins)(@' + botId + ')?$'), (msg, match) => {
     result += '\n- ' + key
   }
   API.sendMessage(msg.chat.id, result, {reply_to_message_id: msg.message_id})
+})
+
+// Main code.
+
+http.createServer((req, res) => {
+  res.writeHead(200, {'Content-Type': 'text/plain'})
+  res.write('')
+  res.end()
+}).listen(config.port || 80)
+
+fs.readdir(config.pluginDir, (err, files) => {
+  if(err)
+    return
+  files.forEach(file => {
+    if(file.endsWith('.js'))
+      registerPlugin(file)
+  })
 })
