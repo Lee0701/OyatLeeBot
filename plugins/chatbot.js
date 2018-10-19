@@ -1,11 +1,11 @@
 
 const chatbot = require('./chatbot/chatbot.js')
+const {Client} = require('pg')
 
+let API = undefined
 let config = undefined
 let BOT_ADMIN = []
 
-let API = undefined
-const {Client} = require('pg')
 let pgClient = undefined
 
 const MSG_LEARNING_NOT_ENABLED = 'ERROR: 학습 불가 그룹, Learning is not enabled for group.'
@@ -31,7 +31,7 @@ const parseArgs = function(args) {
 const insertText = function(text, username) {
   pgClient.query('insert into learned ("text", "teacher") values ($1, $2);', [text, username], (err, res) => {
     if(err)
-      console.log(err)
+      console.error(err)
   })
 }
 
@@ -80,7 +80,7 @@ const onAdmin = function(msg, match) {
     if(args[0] == 'list') {
       pgClient.query('select * from learned ' + parseArgs(args.slice(1)) + ';', (err, res) => {
         if(err)
-          console.log(err)
+          console.error(err)
         let list = 'Texts learned:\n'
         for(let row of res.rows) {
           list += '- ' + row['text'] + ' by ' + row['teacher'] + '\n'
@@ -94,14 +94,14 @@ const onAdmin = function(msg, match) {
         return
       pgClient.query('delete from learned ' + where + ';', (err, res) => {
         if(err)
-          console.log(err)
+          console.error(err)
         API.sendMessage(chatId, 'Data purged.', {reply_to_message_id: msg.message_id})
       })
     }
     else if(args[0] == 'flush') {
       pgClient.query('select * from learned ' + parseArgs(args.slice(1)) + ';', (err, res) => {
         if(err)
-          console.log(err)
+          console.error(err)
         let list = ''
         for(let row of res.rows) {
           list += row['text'] + ';'
@@ -109,11 +109,11 @@ const onAdmin = function(msg, match) {
         learnTexts(list)
         pgClient.query('insert into texts ("text") values ($1);', [list], (err, res) => {
           if(err)
-            console.log(err)
+            console.error(err)
         })
         pgClient.query('delete from learned ' + parseArgs(args.slice(1)) + ';', (err, res) => {
           if(err)
-            console.log(err)
+            console.error(err)
         })
         API.sendMessage(chatId, 'Data flushed.', {reply_to_message_id: msg.message_id})
       })
@@ -146,7 +146,7 @@ module.exports = function(botApi, botConfig) {
 
   pgClient.query('select * from "texts"', (err, res) => {
     if(err)
-      console.log(err)
+      console.error(err)
     for(let row of res.rows) {
       learnTexts(row['text'])
     }
