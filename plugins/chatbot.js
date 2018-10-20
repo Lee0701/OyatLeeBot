@@ -3,7 +3,7 @@ const chatbot = require('./chatbot/chatbot.js')
 const {Client} = require('pg')
 
 let API = undefined
-let config = undefined
+let config = require('../config.js')
 let BOT_ADMIN = []
 
 let pgClient = undefined
@@ -43,10 +43,10 @@ const learnTexts = function(texts) {
   }
 }
 
-const onChat = function(msg, args) {
-  const text = args
+const onChat = function(stream) {
+  const text = stream.args
   if(text) {
-    API.sendMessage(msg.chat.id, chatbot.makeReply(text), {reply_to_message_id: msg.message_id}, true)
+    stream.write(chatbot.makeReply(text), true)
   }
 }
 
@@ -61,21 +61,21 @@ const onMessage = function(msg) {
   return false
 }
 
-const onTeach = function(msg, args) {
+const onTeach = function(stream) {
   const text = args
   if(text) {
-    insertText(text, msg.from.username)
+    insertText(text, stream.msg.from.username)
   }
 }
 
-const onAdmin = function(msg, args) {
-  const chatId = msg.chat.id
-  const text = args
-  if(!BOT_ADMIN.includes(msg.from.id)) {
-    API.sendMessage(chatId, MSG_ACCESS_DENIED, {reply_to_message_id: msg.message_id})
+const onAdmin = function(stream) {
+  const chatId = stream.msg.chat.id
+  const text = stream.args
+  if(!BOT_ADMIN.includes(stream.msg.from.id)) {
+    stream.write(MSG_ACCESS_DENIED)
     return
   }
-  args = text.split(' ')
+  const args = text.split(' ')
   if(text) {
     if(args[0] == 'list') {
       pgClient.query('select * from learned ' + parseArgs(args.slice(1)) + ';', (err, res) => {
@@ -85,7 +85,7 @@ const onAdmin = function(msg, args) {
         for(let row of res.rows) {
           list += '- ' + row['text'] + ' by ' + row['teacher'] + '\n'
         }
-        API.sendMessage(chatId, list, {reply_to_message_id: msg.message_id})
+        stream.write(list)
       })
     }
     else if(args[0] == 'purge') {
@@ -95,7 +95,7 @@ const onAdmin = function(msg, args) {
       pgClient.query('delete from learned ' + where + ';', (err, res) => {
         if(err)
           console.error(err)
-        API.sendMessage(chatId, 'Data purged.', {reply_to_message_id: msg.message_id})
+        stream.write('Data purged.')
       })
     }
     else if(args[0] == 'flush') {
@@ -115,22 +115,21 @@ const onAdmin = function(msg, args) {
           if(err)
             console.error(err)
         })
-        API.sendMessage(chatId, 'Data flushed.', {reply_to_message_id: msg.message_id})
+        stream.write('Data flushed.')
       })
     }
   }
 }
 
-const onFlushRequest = function(msg, args) {
-  const text = 'New flush request from @' + msg.from.username + (args ? ' : ' + args : '')
+const onFlushRequest = function(stream) {
+  const text = 'New flush request from @' + stream.msg.from.username + (stream.args ? ' : ' + stream.args : '')
   
   for(let id of BOT_ADMIN)
     API.sendMessage(id, text)
 }
 
-module.exports = function(botApi, botConfig) {
+module.exports = function(botApi) {
   API = botApi
-  config = botConfig
   BOT_ADMIN = JSON.parse(config.botAdmin)
   API.addListener(700, onMessage)
   API.addCommand('ch|챗', onChat, '사용법: /ch <메시지>\n채팅봇에게 말을 겁니다.\nTIP: 봇의 메시지에 답장을 해도 대화할 수 있습니다.')

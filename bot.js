@@ -51,10 +51,10 @@ const API = {
     if(delayed) {
       const length = msg.normalize("NFD").length
       setTimeout(function() {
-        sendMessage(chatId, msg, options)
+        bot.sendMessage(chatId, msg, options)
       }, 109 * length)  // 2018년 10월 20일 기준 리의 평균 타속: 분당 550타
     } else {
-      sendMessage(chatId, msg, options)
+      bot.sendMessage(chatId, msg, options)
     }
   },
   answerInlineQuery: function(id, result) {
@@ -68,15 +68,9 @@ const registerPlugin = function(name) {
   plugin(API, config)
 }
 
-const sendMessage = function(chatId, msg, options) {
-  bot.sendMessage(chatId, msg, options)
-}
-
 const matchCommand = function(msg) {
   if(!msg.text)
     return
-  
-  console.log(msg.text)
   
   const commands = msg.text.split(/ ?\| ?/)
   const cmds = []
@@ -114,7 +108,7 @@ const matchCommand = function(msg) {
               stream.readCallback = callback
             })
         stream.write = (i == commands.length-1)
-            ? ((text, delayed=false) => sendMessage(msg.chat.id, text, {reply_to_message_id: msg.message_id}, delayed))
+            ? ((text, delayed=false) => API.sendMessage(msg.chat.id, text, {reply_to_message_id: msg.message_id}, delayed))
             : ((text, delayed=false) => {
               if(prev && prev.readCallback)
                 prev.readCallback(text)
@@ -122,7 +116,6 @@ const matchCommand = function(msg) {
         
         cmds.push({callback: listeners.command[cmd].callback, stream: stream})
         streams.push(stream)
-        // listeners.command[cmd].callback(stream)
         break
       }
     }
