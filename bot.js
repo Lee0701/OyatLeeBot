@@ -17,6 +17,7 @@ let plugins = {}
 let listeners = {
   message: [],
   inline: [],
+  input: {},
   command: {}
 }
 
@@ -44,6 +45,17 @@ const API = {
   },
   removeListener: function(priority, callback) {
     listeners.message[priority].splice(listeners.message[priority].indexOf(callback), 1)
+  },
+  addInput: function(chatId, messageId, callback, question) {
+    if(question === undefined)
+      question = 'INPUT'
+    bot.sendMessage(chatId, question, {reply_to_message_id: messageId, reply_markup: {force_reply: true}}).then(msg => {
+      listeners.input[msg.chat.id + ',' + msg.message_id] = callback
+    })
+  },
+  removeInput: function(chatId, messageId) {
+    delete listeners.input[chatId + ',' + messageId]
+    bot.deleteMessage(chatId, messageId)
   },
   sendMessage: function(chatId, msg, options={}, delayed=false) {
     bot.sendChatAction(chatId, 'typing')
@@ -77,6 +89,14 @@ bot.on('inline_query', (query) => {
 })
 
 bot.on('message', (msg) => {
+  if(msg.reply_to_message) {
+    const input = listeners.input[msg.chat.id + ',' + msg.reply_to_message.message_id]
+    if(input) {
+      input(msg)
+      API.removeInput(msg.chat.id, msg.reply_to_message.message_id)
+      return
+    }
+  }
   for(let i in listeners.message) {
     for(let listener of listeners.message[i]) {
       if(listener(msg))
@@ -116,6 +136,10 @@ bot.onText(new RegExp('^/(help)(@' + botId + ')?( (.*))?$'), (msg, match) => {
     }
   }
   API.sendMessage(msg.chat.id, result, {reply_to_message_id: msg.message_id})
+})
+
+bot.on('polling_error', (err) => {
+  console.log(err)
 })
 
 // Main code.
