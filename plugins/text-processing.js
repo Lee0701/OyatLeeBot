@@ -2,9 +2,9 @@
 let API = undefined
 let config = undefined
 
-const onUpper = function(msg, match) {
-  if(match[4]) {
-    API.sendMessage(msg.chat.id, match[4].toUpperCase(), {reply_to_message_id: msg.message_id})
+const onUpper = function(msg, args) {
+  if(args) {
+    API.sendMessage(msg.chat.id, args.toUpperCase(), {reply_to_message_id: msg.message_id})
   } else {
     API.addInput(msg.chat.id, msg.message_id, (m) => {
       API.sendMessage(m.chat.id, m.text.toUpperCase(), {reply_to_message_id: m.message_id})

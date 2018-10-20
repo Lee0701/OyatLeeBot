@@ -43,8 +43,8 @@ const learnTexts = function(texts) {
   }
 }
 
-const onChat = function(msg, match) {
-  const text = match[4]
+const onChat = function(msg, args) {
+  const text = args
   if(text) {
     API.sendMessage(msg.chat.id, chatbot.makeReply(text), {reply_to_message_id: msg.message_id}, true)
   }
@@ -61,21 +61,21 @@ const onMessage = function(msg) {
   return false
 }
 
-const onTeach = function(msg, match) {
-  const text = match[4]
+const onTeach = function(msg, args) {
+  const text = args
   if(text) {
     insertText(text, msg.from.username)
   }
 }
 
-const onAdmin = function(msg, match) {
+const onAdmin = function(msg, args) {
   const chatId = msg.chat.id
-  const text = match[4]
+  const text = args
   if(!BOT_ADMIN.includes(msg.from.id)) {
     API.sendMessage(chatId, MSG_ACCESS_DENIED, {reply_to_message_id: msg.message_id})
     return
   }
-  const args = text.split(' ')
+  args = text.split(' ')
   if(text) {
     if(args[0] == 'list') {
       pgClient.query('select * from learned ' + parseArgs(args.slice(1)) + ';', (err, res) => {
@@ -121,8 +121,8 @@ const onAdmin = function(msg, match) {
   }
 }
 
-const onFlushRequest = function(msg, match) {
-  const text = 'New flush request from @' + msg.from.username + (match[4] ? ' : ' + match[4] : '')
+const onFlushRequest = function(msg, args) {
+  const text = 'New flush request from @' + msg.from.username + (args ? ' : ' + args : '')
   
   for(let id of BOT_ADMIN)
     API.sendMessage(id, text)

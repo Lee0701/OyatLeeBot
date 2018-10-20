@@ -5,8 +5,8 @@ let API = undefined
 
 const yetCommands = '옛한글|옛|yethangul|yethangeul|yet'
 
-const onYet = function(msg, match) {
-  const cand = match[4]
+const onYet = function(msg, args) {
+  const cand = args
   if(msg.reply_to_message) {
     API.sendMessage(msg.chat.id, '-> ' + yet(msg.reply_to_message.text) + ' @' + msg.from.username, {reply_to_message_id: msg.reply_to_message.message_id})
   }

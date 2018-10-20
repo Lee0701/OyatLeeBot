@@ -23,11 +23,9 @@ let listeners = {
 
 const API = {
   addCommand: function(command, callback, help) {
-    bot.onText(new RegExp('^/(' + command + ')(@' + botId + ')?( (.*))?$'), callback)
     listeners.command[command] = {callback: callback, help: help}
   },
   removeCommand: function(priority, command) {
-    bot.removeTextListener(new RegExp('^/(' + command + ')(@' + botId + ')?( (.*))?$'))
     delete listeners.command[command]
   },
   addInline: function(priority, callback) {
@@ -62,10 +60,10 @@ const API = {
     if(delayed) {
       const length = msg.normalize("NFD").length
       setTimeout(function() {
-        bot.sendMessage(chatId, msg, options)
+        sendMessage(chatId, msg, options)
       }, 109 * length)  // 2018년 10월 20일 기준 리의 평균 타속: 분당 550타
     } else {
-      bot.sendMessage(chatId, msg, options)
+      sendMessage(chatId, msg, options)
     }
   },
   answerInlineQuery: function(id, result) {
@@ -77,6 +75,10 @@ const registerPlugin = function(name) {
   const plugin = require(config.pluginDir + name)
   plugins[name] = plugin
   plugin(API, config)
+}
+
+const sendMessage = function(chatId, msg, options) {
+  bot.sendMessage(chatId, msg, options)
 }
 
 bot.on('inline_query', (query) => {
@@ -97,6 +99,19 @@ bot.on('message', (msg) => {
       return
     }
   }
+  
+  for(let cmd in listeners.command) {
+    const match = new RegExp('^\\/(' + cmd + ')((?: ?\\| ?[^ \\|]+)+)?(?:@' + botId + ')?(?: (.*))?$').exec(msg.text)
+    if(match) {
+      if(match[2]) {
+        const pipes = match[2].split(/ ?\| ?/)
+        pipes[0] = match[1]
+        console.log(pipes)
+      }
+      listeners.command[cmd].callback(msg, match[3])
+    }
+  }
+  
   for(let i in listeners.message) {
     for(let listener of listeners.message[i]) {
       if(listener(msg))
