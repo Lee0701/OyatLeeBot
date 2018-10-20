@@ -11,14 +11,16 @@ const token = config.token
 
 const bot = new TelegramBot(token, {polling: true})
 
+const INPUT_TIMEOUT = 60000
 const MSG_NO_HELP = 'ERROR: 해당 명령어에 대한 도움말을 찾을 수 없습니다, Help not found for this command.'
 
 let plugins = {}
 let listeners = {
   message: [],
   inline: [],
-  input: {},
-  command: {}
+  command: {},
+  stream: {},
+  read: {}
 }
 
 const API = {
@@ -43,17 +45,6 @@ const API = {
   },
   removeListener: function(priority, callback) {
     listeners.message[priority].splice(listeners.message[priority].indexOf(callback), 1)
-  },
-  addInput: function(chatId, messageId, callback, question) {
-    if(question === undefined)
-      question = 'INPUT'
-    bot.sendMessage(chatId, question, {reply_to_message_id: messageId, reply_markup: {force_reply: true}}).then(msg => {
-      listeners.input[msg.chat.id + ',' + msg.message_id] = callback
-    })
-  },
-  removeInput: function(chatId, messageId) {
-    delete listeners.input[chatId + ',' + messageId]
-    bot.deleteMessage(chatId, messageId)
   },
   sendMessage: function(chatId, msg, options={}, delayed=false) {
     bot.sendChatAction(chatId, 'typing')
@@ -81,6 +72,68 @@ const sendMessage = function(chatId, msg, options) {
   bot.sendMessage(chatId, msg, options)
 }
 
+const matchCommand = function(msg) {
+  if(!msg.text)
+    return
+  
+  console.log(msg.text)
+  
+  const commands = msg.text.split(/ ?\| ?/)
+  const cmds = []
+  
+  const streams = []
+  
+  for(let i = commands.length-1 ; i >= 0 ; i--) {
+    const command = commands[i]
+    for(let cmd in listeners.command) {
+      const regexp = new RegExp('^\\/(' + cmd + ')(?:@' + botId + ')?(?: (.*))?$')
+      const match = regexp.exec(command)
+      if(match) {
+        const prev = (streams.length > 0) ? streams[streams.length-1] : undefined
+        
+        const stream = {
+          msg: msg,
+          command: match[1],
+          args: match[2]
+        }
+        
+        stream.read = (i == 0)
+            ? ((callback) => {
+              bot.sendMessage(msg.chat.id, 'INPUT', {reply_to_message_id: msg.message_id, reply_markup: {force_reply: true}}).then(m => {
+                const readId = m.chat.id + ',' + m.message_id
+                listeners.read[readId] = (text) => callback(text)
+                setTimeout(() => {
+                  if(listeners.read[readId]) {
+                    delete listeners.read[readId]
+                    bot.deleteMessage(msg.chat.id, m.message_id)
+                  }
+                }, INPUT_TIMEOUT)
+              })
+            })
+            : ((callback) => {
+              stream.readCallback = callback
+            })
+        stream.write = (i == commands.length-1)
+            ? ((text, delayed=false) => sendMessage(msg.chat.id, text, {reply_to_message_id: msg.message_id}, delayed))
+            : ((text, delayed=false) => {
+              if(prev && prev.readCallback)
+                prev.readCallback(text)
+            })
+        
+        cmds.push({callback: listeners.command[cmd].callback, stream: stream})
+        streams.push(stream)
+        // listeners.command[cmd].callback(stream)
+        break
+      }
+    }
+  }
+  
+  for(let cmd of cmds) {
+    setTimeout(() => cmd.callback(cmd.stream), 0)
+  }
+  
+}
+
 bot.on('inline_query', (query) => {
   for(let i in listeners.inline) {
     for(let listener of listeners.inline[i]) {
@@ -91,26 +144,15 @@ bot.on('inline_query', (query) => {
 })
 
 bot.on('message', (msg) => {
-  if(msg.reply_to_message) {
-    const input = listeners.input[msg.chat.id + ',' + msg.reply_to_message.message_id]
-    if(input) {
-      input(msg)
-      API.removeInput(msg.chat.id, msg.reply_to_message.message_id)
+  if(msg.reply_to_message && msg.reply_to_message.from.username == botId) {
+    const read = listeners.read[msg.chat.id + ',' + msg.reply_to_message.message_id]
+    if(read) {
+      read(msg.text)
       return
     }
   }
   
-  for(let cmd in listeners.command) {
-    const match = new RegExp('^\\/(' + cmd + ')((?: ?\\| ?[^ \\|]+)+)?(?:@' + botId + ')?(?: (.*))?$').exec(msg.text)
-    if(match) {
-      if(match[2]) {
-        const pipes = match[2].split(/ ?\| ?/)
-        pipes[0] = match[1]
-        console.log(pipes)
-      }
-      listeners.command[cmd].callback(msg, match[3])
-    }
-  }
+  matchCommand(msg)
   
   for(let i in listeners.message) {
     for(let listener of listeners.message[i]) {

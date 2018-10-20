@@ -1,19 +1,70 @@
 
+const https = require('https')
+
 let API = undefined
 let config = undefined
 
-const onUpper = function(msg, args) {
-  if(args) {
-    API.sendMessage(msg.chat.id, args.toUpperCase(), {reply_to_message_id: msg.message_id})
+const onEcho = function(stream) {
+  if(stream.args) {
+    stream.write(stream.args)
+  }
+}
+
+const onCat = function(stream) {
+  if(stream.args) {
+    try {
+      https.get(stream.args, res => {
+        res.on('data', data => {
+          stream.write(data)
+        })
+      }).on('error', error => {
+        stream.write('ERROR: ' + error.message)
+      })
+    } catch(e) {
+      stream.write(e)
+    }
+
+  }
+}
+
+const onUpper = function(stream) {
+  if(stream.args) {
+    stream.write(stream.args.toUpperCase())
   } else {
-    API.addInput(msg.chat.id, msg.message_id, (m) => {
-      API.sendMessage(m.chat.id, m.text.toUpperCase(), {reply_to_message_id: m.message_id})
-    }, 'INPUT: 대문자로 변환할 문자열 입력, Enter a string to convert to uppercase.')
+    stream.read(msg => {
+      stream.write(msg.toUpperCase())
+    })
+  }
+}
+
+const onLower = function(stream) {
+  if(stream.args) {
+    stream.write(stream.args.toLowerCase())
+  } else {
+    stream.read(msg => {
+      stream.write(msg.toLowerCase())
+    })
+  }
+}
+
+const onAsdf = function(stream) {
+  if(stream.args) {
+    const result = (stream.args == 'asdf') ? 'true' : 'false'
+    stream.write(result)
+  } else {
+    stream.read(msg => {
+      const result = (msg == 'asdf') ? 'true' : 'false'
+      stream.write(result)
+    })
   }
 }
 
 module.exports = function(botApi, botConfig) {
   API = botApi
   config = botConfig
+  API.addCommand('echo', onEcho)
+  API.addCommand('cat', onCat)
   API.addCommand('upper|대문자', onUpper)
+  API.addCommand('lower|소문자', onLower)
+  API.addCommand('asdf', onAsdf)
 }

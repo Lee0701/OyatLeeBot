@@ -5,13 +5,17 @@ let API = undefined
 
 const yetCommands = '옛한글|옛|yethangul|yethangeul|yet'
 
-const onYet = function(msg, args) {
-  const cand = args
-  if(msg.reply_to_message) {
-    API.sendMessage(msg.chat.id, '-> ' + yet(msg.reply_to_message.text) + ' @' + msg.from.username, {reply_to_message_id: msg.reply_to_message.message_id})
+const onYet = function(stream) {
+  const cand = stream.args
+  if(stream.msg.reply_to_message) {
+    stream.write('-> ' + yet(stream.msg.reply_to_message.text) + ' @' + stream.msg.from.username)
   }
   if(cand) {
-    API.sendMessage(msg.chat.id, '-> ' + yet(cand), {reply_to_message_id: msg.message_id})
+    stream.write('-> ' + yet(cand))
+  } else {
+    stream.read(msg => {
+      stream.write('-> ' + yet(msg))
+    })
   }
 }
 
