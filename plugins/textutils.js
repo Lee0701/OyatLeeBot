@@ -15,7 +15,7 @@ const onCat = function(stream) {
     try {
       https.get(stream.args, res => {
         res.on('data', data => {
-          stream.write(data)
+          stream.write(data.toString())
         })
       }).on('error', error => {
         stream.write('ERROR: ' + error.message)
@@ -24,6 +24,23 @@ const onCat = function(stream) {
       stream.write(e)
     }
 
+  }
+}
+
+const onGrep = function(stream) {
+  if(stream.args) {
+    stream.read(msg => {
+      let result = ''
+      for(let line of msg.split(/(\r|\n|\r\n)/)) {
+        if(line.includes(stream.args))
+          result += line + '\n'
+      }
+      stream.write(result.substring(0, result.length-1))
+    })
+  } else {
+    stream.read(msg => {
+      stream.write(msg)
+    })
   }
 }
 
@@ -67,4 +84,5 @@ module.exports = function(botApi, botConfig) {
   API.addCommand('upper|대문자', onUpper)
   API.addCommand('lower|소문자', onLower)
   API.addCommand('asdf', onAsdf)
+  API.addCommand('grep', onGrep)
 }
