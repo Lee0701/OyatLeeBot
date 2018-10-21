@@ -95,13 +95,13 @@ const matchCommand = function(msg) {
         
         stream.read = (i == 0)
             ? ((callback) => {
-              API.sendMessage(msg.chat.id, 'INPUT', {reply_to_message_id: msg.message_id, parse_mode: 'HTML', reply_markup: {force_reply: true}}).then(m => {
+              API.sendMessage(msg.chat.id, 'INPUT', {reply_to_message_id: msg.message_id, parse_mode: 'HTML', reply_markup: {force_reply: true, selective: true}}).then(m => {
                 const readId = m.chat.id + ',' + m.message_id
                 listeners.read[readId] = (text) => callback(text)
                 setTimeout(() => {
                   if(listeners.read[readId]) {
                     delete listeners.read[readId]
-                    bot.deleteMessage(msg.chat.id, m.message_id)
+                    bot.deleteMessage(m.chat.id, m.message_id)
                   }
                 }, INPUT_TIMEOUT)
               })
@@ -140,9 +140,12 @@ bot.on('inline_query', (query) => {
 
 bot.on('message', (msg) => {
   if(msg.reply_to_message && msg.reply_to_message.from.username == botId) {
-    const read = listeners.read[msg.chat.id + ',' + msg.reply_to_message.message_id]
+    const readId = msg.chat.id + ',' + msg.reply_to_message.message_id
+    const read = listeners.read[readId]
     if(read) {
       read(msg.text)
+      delete listeners.read[readId]
+      bot.deleteMessage(msg.chat.id, msg.reply_to_message.message_id)
       return
     }
   }
