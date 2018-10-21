@@ -7,7 +7,8 @@
     "node-gyp": "^3.7.0",
     "node-telegram-bot-api": "^0.30.0",
     "node-twitter-korean-text": "^1.0.5",
-    "pg": "^7.4.3"
+    "pg": "^7.4.3",
+    "nodemw": "^0.12.2"
   },
   "devDependencies": {},
   "scripts": {

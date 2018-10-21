@@ -12,6 +12,7 @@ const token = config.token
 const bot = new TelegramBot(token, {polling: true})
 
 const INPUT_TIMEOUT = 60000
+const MAX_LENGTH = 4096
 const MSG_NO_HELP = 'ERROR: 해당 명령어에 대한 도움말을 찾을 수 없습니다, Help not found for this command.'
 
 let plugins = {}
@@ -48,13 +49,14 @@ const API = {
   },
   sendMessage: function(chatId, msg, options={}, delayed=false) {
     bot.sendChatAction(chatId, 'typing')
+    msg = msg.length > MAX_LENGTH ? msg.substring(0, MAX_LENGTH-3) + '...' : msg
     if(delayed) {
       const length = msg.normalize("NFD").length
       setTimeout(function() {
         bot.sendMessage(chatId, msg, options)
       }, 109 * length)  // 2018년 10월 20일 기준 리의 평균 타속: 분당 550타
     } else {
-      bot.sendMessage(chatId, msg, options)
+      return bot.sendMessage(chatId, msg, options)
     }
   },
   answerInlineQuery: function(id, result) {
@@ -93,7 +95,7 @@ const matchCommand = function(msg) {
         
         stream.read = (i == 0)
             ? ((callback) => {
-              bot.sendMessage(msg.chat.id, 'INPUT', {reply_to_message_id: msg.message_id, reply_markup: {force_reply: true}}).then(m => {
+              API.sendMessage(msg.chat.id, 'INPUT', {reply_to_message_id: msg.message_id, parse_mode: 'HTML', reply_markup: {force_reply: true}}).then(m => {
                 const readId = m.chat.id + ',' + m.message_id
                 listeners.read[readId] = (text) => callback(text)
                 setTimeout(() => {
@@ -108,7 +110,7 @@ const matchCommand = function(msg) {
               stream.readCallback = callback
             })
         stream.write = (i == commands.length-1)
-            ? ((text, delayed=false) => API.sendMessage(msg.chat.id, text, {reply_to_message_id: msg.message_id}, delayed))
+            ? ((text, delayed=false) => API.sendMessage(msg.chat.id, text, {reply_to_message_id: msg.message_id, parse_mode: 'HTML'}, delayed))
             : ((text, delayed=false) => {
               if(prev && prev.readCallback)
                 prev.readCallback(text)
