@@ -62,7 +62,7 @@ const onMessage = function(msg) {
 }
 
 const onTeach = function(stream) {
-  const text = args
+  const text = stream.args
   if(text) {
     insertText(text, stream.msg.from.username)
   }
