@@ -45,7 +45,7 @@ const searchWiki = function(stream, lang, title) {
   client.getArticle(title, true, (err, result) => {
     if(err) {
       console.error(err)
-    } else {
+    } else if(result) {
       stream.write(result.toString().replace(/\</g, '&lt;').replace(/\>/g, '&gt;').replace(/\[\[([^\[\]]+)\]\]/g, (match, title) => `<a href="${url}/wiki/${encodeURIComponent(title)}">${title}</a>`))
     }
   })
