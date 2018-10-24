@@ -38,6 +38,6 @@ const onInline = function(query) {
 
 module.exports = function(botApi) {
   API = botApi
-  API.addListener(1000, onMessage)
-  API.addInline(1000, onInline)
+  API.addListener(2000, onMessage)
+  API.addInline(2000, onInline)
 }

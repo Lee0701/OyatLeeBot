@@ -82,7 +82,7 @@ const matchCommand = function(msg) {
   for(let i = commands.length-1 ; i >= 0 ; i--) {
     const command = commands[i]
     for(let cmd in listeners.command) {
-      const regexp = new RegExp('^\\/(' + cmd + ')(?:@' + botId + ')?(?: (.*))?$', 'm')
+      const regexp = new RegExp('^\\/(' + cmd + ')(?:@' + botId + ')?(?: ([\\s\\S]*))?$', 'm')
       const match = regexp.exec(command)
       if(match) {
         const prev = (streams.length > 0) ? streams[streams.length-1] : undefined
