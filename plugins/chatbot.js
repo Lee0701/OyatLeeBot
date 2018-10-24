@@ -1,12 +1,14 @@
 
 const chatbot = require('./chatbot/chatbot.js')
-const {Client} = require('pg')
+const {google} = require('googleapis')
 
 let API = undefined
 let config = require('../config.js')
 let BOT_ADMIN = []
 
-let pgClient = undefined
+const SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+
+let sheets = undefined
 
 const MSG_LEARNING_NOT_ENABLED = 'ERROR: 학습 불가 그룹, Learning is not enabled for group.'
 const MSG_NOT_ADMIN = 'ERROR: 관리자 권한 필요, Admin privilege required.'
@@ -29,9 +31,16 @@ const parseArgs = function(args) {
 }
 
 const insertText = function(text, username) {
-  pgClient.query('insert into learned ("text", "teacher") values ($1, $2);', [text, username], (err, res) => {
+  sheets.spreadsheets.values.append({
+    spreadsheetId: config.sheetId,
+    range: 'data',
+    valueInputOption: 'USER_ENTERED',
+    resource: {
+      values: [[text, username]]
+    },
+  }, (err, res) => {
     if(err)
-      console.error(err)
+      console.error('Google Sheets API returned an error: ' + err)
   })
 }
 
@@ -41,6 +50,24 @@ const learnTexts = function(texts) {
       continue
     chatbot.makeReply(text, true, false)
   }
+}
+
+const reload = function() {
+  chatbot.reset()
+  sheets.spreadsheets.values.get({
+    spreadsheetId: config.sheetId,
+    range: 'data!A:A',
+  }, (err, res) => {
+    if(err)
+      return console.error('Google Sheets API returned an error: ' + err)
+    const rows = res.data.values
+    if(rows.length) {
+      rows.forEach(row => {
+      learnTexts(row[0])
+      })
+    }
+  })
+  
 }
 
 const onChat = function(stream) {
@@ -65,6 +92,7 @@ const onTeach = function(stream) {
   const text = stream.args
   if(text) {
     insertText(text, stream.msg.from.username)
+    learnTexts(text)
   }
 }
 
@@ -77,6 +105,10 @@ const onAdmin = function(stream) {
   }
   const args = text.split(' ')
   if(text) {
+    if(args[0] == 'reload') {
+      reload()
+    }
+    /*
     if(args[0] == 'list') {
       pgClient.query('select * from learned ' + parseArgs(args.slice(1)) + ';', (err, res) => {
         if(err)
@@ -118,6 +150,7 @@ const onAdmin = function(stream) {
         stream.write('Data flushed.')
       })
     }
+    */
   }
 }
 
@@ -137,19 +170,10 @@ module.exports = function(botApi) {
   API.addCommand('chadmin', onAdmin)
   API.addCommand('flushrequest', onFlushRequest, '사용법: /flushrequest\n봇의 관리자에게 학습 확정 요청을 보냅니다.')
   
-  pgClient = new Client({
-    connectionString: config.databaseUrl,
-    ssl: true,
-  })
-  pgClient.connect()
-
-  pgClient.query('select * from "texts"', (err, res) => {
-    if(err)
-      console.error(err)
-    for(let row of res.rows) {
-      learnTexts(row['text'])
-    }
-    console.log('learning complete.')
-  })
-
+  const jwtClient = new google.auth.JWT(config.googleClientEmail, null, config.googlePrivateKey.replace(/\\n/g, '\n'), SCOPES)
+  jwtClient.authorize()
+  sheets = google.sheets({version: 'v4', auth: jwtClient})
+  
+  reload()
+  
 }

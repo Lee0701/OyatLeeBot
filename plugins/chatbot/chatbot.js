@@ -165,12 +165,15 @@ const makeReply = function(text, learn=false, make=true) {
   return sentence.map(token => token.substring(0, token.indexOf(':'))).join('')
 }
 
-const saveDictionary = function() {
-  
+const resetDictionary = function() {
+  dictionary = {}
+  reverseDictionary = {}
+  keywordDictionary = {}
 }
 
 module.exports = {
   makeReply: makeReply,
+  reset: resetDictionary,
   dictionary: dictionary,
   reverseDictionary: reverseDictionary,
   keywordDictionary: keywordDictionary
