@@ -4,7 +4,6 @@ let API = undefined
 const verticalCommands = '우종서|종서|vertical'
 
 const FULLWIDTHS = {
-  ' ': '  ',
   '.': '。',
   ',': '、',
   '?': '？',
@@ -15,7 +14,7 @@ const fullwidth = (text) => [...text.toString()].map(ch => FULLWIDTHS[ch] || ch)
 
 const vertical = function(text) {
   const grid = fullwidth(text).split('\n').reverse().map(line => [...line])
-  const flipped = grid[grid.reduce((p, c, i, a) => a[p].length > c.length ? p : i, 0)].map((col, i) => grid.map(row => row[i] || '  '))
+  const flipped = grid[grid.reduce((p, c, i, a) => a[p].length > c.length ? p : i, 0)].map((col, i) => grid.map(row => (row[i] || ' ').replace(' ', '  ')))
   return '<pre>' + flipped.map(line => line.join('')).join('\n') + '</pre>'
 }
 
