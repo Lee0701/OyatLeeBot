@@ -4,7 +4,7 @@ let API = undefined
 const verticalCommands = '우종서|종서|vertical'
 
 const FULLWIDTHS = {
-  ' '; '  ',
+  ' ': '  ',
   '.': '。',
   ',': '、',
   '?': '？',
