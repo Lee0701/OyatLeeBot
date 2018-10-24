@@ -10,11 +10,11 @@ const FULLWIDTHS = {
   '!': '！',
 }
 
-const fullwidth = (text) => [...text].map(ch => FULLWIDTHS[ch] || ch).join('')
+const fullwidth = (text) => [...text.toString()].map(ch => FULLWIDTHS[ch] || ch).join('')
 
 const vertical = function(text) {
   const grid = fullwidth(text).split('\n').reverse().map(line => [...line])
-  const flipped = grid[0].map((col, i) => grid.map(row => row[i] || '  '))
+  const flipped = grid[grid.reduce((p, c, i, a) => a[p].length > c.length ? p : i, 0)].map((col, i) => grid.map(row => row[i] || '  '))
   return '<pre>' + flipped.map(line => line.join('')).join('\n') + '</pre>'
 }
 
