@@ -67,22 +67,26 @@ const reload = function() {
       })
     }
   })
-  
+
 }
 
 const onChat = function(stream) {
   const text = stream.args
   if(text) {
-    stream.write(chatbot.makeReply(text), true)
+    const reply = chatbot.makeReply(text)
+    stream.write(reply, true)
+    logChat(text, reply)
   }
 }
 
-const onMessage = function(msg) {    
+const onMessage = function(msg) {
   if(!msg.text)
     return false
-  
+
   if(msg.reply_to_message && msg.reply_to_message.from.username == config.botId) {
-    API.sendMessage(msg.chat.id, chatbot.makeReply(msg.text), {reply_to_message_id: msg.message_id}, true)
+    const reply = chatbot.makeReply(msg.text)
+    API.sendMessage(msg.chat.id, reply, {reply_to_message_id: msg.message_id}, true)
+    logChat(msg.text, reply)
     return true
   }
   return false
@@ -156,9 +160,23 @@ const onAdmin = function(stream) {
 
 const onFlushRequest = function(stream) {
   const text = 'New flush request from @' + stream.msg.from.username + (stream.args ? ' : ' + stream.args : '')
-  
+
   for(let id of BOT_ADMIN)
     API.sendMessage(id, text)
+}
+
+const logChat = function(text, reply) {
+  sheets.spreadsheets.values.append({
+    spreadsheetId: config.sheetId,
+    range: 'log',
+    valueInputOption: 'USER_ENTERED',
+    resource: {
+      values: [[text, reply]]
+    },
+  }, (err, res) => {
+    if(err)
+      console.error('Google Sheets API returned an error: ' + err)
+  })
 }
 
 module.exports = function(botApi) {
@@ -169,11 +187,11 @@ module.exports = function(botApi) {
   API.addCommand('teach', onTeach, '사용법: /teach (<질문> -> ) <답변>\n채팅봇에게 말을 가르칩니다.')
   API.addCommand('chadmin', onAdmin)
   API.addCommand('flushrequest', onFlushRequest, '사용법: /flushrequest\n봇의 관리자에게 학습 확정 요청을 보냅니다.')
-  
+
   const jwtClient = new google.auth.JWT(config.googleClientEmail, null, config.googlePrivateKey.replace(/\\n/g, '\n'), SCOPES)
   jwtClient.authorize()
   sheets = google.sheets({version: 'v4', auth: jwtClient})
-  
+
   reload()
-  
+
 }
