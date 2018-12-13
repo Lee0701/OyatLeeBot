@@ -59,6 +59,9 @@ const API = {
       return bot.sendMessage(chatId, msg, options)
     }
   },
+  sendPhoto: function(chatId, url, options={}) {
+    bot.sendPhoto(chatId, url, options)
+  },
   answerInlineQuery: function(id, result) {
     bot.answerInlineQuery(id, result)
   }
@@ -73,12 +76,12 @@ const registerPlugin = function(name) {
 const matchCommand = function(msg) {
   if(!msg.text)
     return
-  
+
   const commands = msg.text.split(/ ?\| ?/)
   const cmds = []
-  
+
   const streams = []
-  
+
   for(let i = commands.length-1 ; i >= 0 ; i--) {
     const command = commands[i]
     for(let cmd in listeners.command) {
@@ -86,13 +89,13 @@ const matchCommand = function(msg) {
       const match = regexp.exec(command)
       if(match) {
         const prev = (streams.length > 0) ? streams[streams.length-1] : undefined
-        
+
         const stream = {
           msg: msg,
           command: match[1],
           args: match[2]
         }
-        
+
         stream.read = (i == 0)
             ? ((callback) => {
               API.sendMessage(msg.chat.id, 'INPUT', {reply_to_message_id: msg.message_id, parse_mode: 'HTML', reply_markup: {force_reply: true, selective: true}}).then(m => {
@@ -115,18 +118,18 @@ const matchCommand = function(msg) {
               if(prev && prev.readCallback)
                 prev.readCallback(text)
             })
-        
+
         cmds.push({callback: listeners.command[cmd].callback, stream: stream})
         streams.push(stream)
         break
       }
     }
   }
-  
+
   for(let cmd of cmds) {
     setTimeout(() => cmd.callback(cmd.stream), 0)
   }
-  
+
 }
 
 bot.on('inline_query', (query) => {
@@ -149,9 +152,9 @@ bot.on('message', (msg) => {
       return
     }
   }
-  
+
   matchCommand(msg)
-  
+
   for(let i in listeners.message) {
     for(let listener of listeners.message[i]) {
       if(listener(msg))

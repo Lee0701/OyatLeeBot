@@ -1,23 +1,26 @@
 
-const Wikipedia = require('nodemw')
+const wtf = require('wtf_wikipedia')
+
+const parse = require('../parse-args.js')
+
+let API
 
 const onWiki = function(stream) {
   let lang = 'ko'
+  let format = 'full'
   let title = undefined
   if(stream.args) {
-    const split = stream.args.split(' ')
-    if(split.length >= 2 && (split[0] == '--lang' || split[0] == '-l')) {
-      lang = split[1]
-      split.splice(0, 2)
-    }
-    if(split.length >= 1)
-      title = split.join(' ')
+    const args = parse(stream.args.split(' '))
+    console.log(args)
+    lang = args['--lang'] || args['-l'] || 'ko'
+    format = args['--format'] || args['-f'] || 'full'
+    title = args.rest
   }
   if(title) {
-    searchWiki(stream, lang, title)
+    searchWiki(stream, lang, title, format)
   } else {
     stream.read(msg => {
-      searchWiki(stream, lang, msg)
+      searchWiki(stream, lang, msg, format)
     })
   }
 }
@@ -34,24 +37,19 @@ const onEnWiki = function(stream) {
   }
 }
 
-const searchWiki = function(stream, lang, title) {
-  const url = lang + '.wikipedia.org'
-  const client = new Wikipedia({
-    protocol: 'https',
-    server: url,
-    path: '/w',
-    debug: false
-  })
-  client.getArticle(title, true, (err, result) => {
+const searchWiki = function(stream, lang, title, format) {
+  wtf.fetch(title, lang, (err, doc) => {
     if(err) {
-      console.error(err)
-    } else if(result) {
-      stream.write(result.toString().replace(/\</g, '&lt;').replace(/\>/g, '&gt;').replace(/\[\[([^\[\]]+)\]\]/g, (match, title) => `<a href="${url}/wiki/${encodeURIComponent(title)}">${title}</a>`))
+      stream.write('에러, ERROR.')
+      return
     }
+    if(format == 'summary' || format == 's') stream.write(doc.sections(0).text())
+    else stream.write(doc.text())
   })
 }
 
-module.exports = function(API) {
+module.exports = function(botApi) {
+  API = botApi
   API.addCommand('wiki', onWiki)
   API.addCommand('enwiki', onEnWiki)
 }
