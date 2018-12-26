@@ -20,7 +20,7 @@ const insert = function(range, values, callback) {
   }, (err, res) => {
     if(err) {
       console.error(MSG_ERROR + err)
-      callback(err)
+      if(callback) callback(err)
     }
   })
 }
@@ -32,9 +32,9 @@ const select = function(range, callback) {
   }, (err, res) => {
     if(err) {
       return console.error(MSG_ERROR + err)
-      callback(err)
+      if(callback) callback(err)
     }
-    callback(null, res.data.values)
+    if(callback) callback(null, res.data.values)
   })
 }
 
@@ -49,7 +49,7 @@ const update = function(range, values, callback) {
   }, (err, res) => {
     if(err) {
       console.error(MSG_ERROR + err)
-      callback(err)
+      if(callback) callback(err)
     }
   })
 }
@@ -61,7 +61,7 @@ const del = function(range, callback) {
   }, (err, res) => {
     if(err) {
       console.error(MSG_ERROR + err)
-      callback(err)
+      if(callback) callback(err)
     }
   })
 }

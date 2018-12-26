@@ -13,7 +13,9 @@ const bot = new TelegramBot(token, {polling: true})
 
 const INPUT_TIMEOUT = 60000
 const MAX_LENGTH = 4096
-const MSG_NO_HELP = 'ERROR: 해당 명령어에 대한 도움말을 찾을 수 없습니다, Help not found for this command.'
+const MSG_PLUGIN_LIST = 'bot_plugin_list'
+const MSG_NO_HELP = 'bot_no_help'
+const MSG_HELP_USAGE = 'bot_help_usage'
 
 let plugins = {}
 let listeners = {
@@ -24,9 +26,26 @@ let listeners = {
   read: {}
 }
 
+let users = {}
+
 const API = {
   getPlugin: function(name) {
     return plugins[name]
+  },
+  getString: function(locale, key, args) {
+    return API.getPlugin('i18n.js').getString(locale, key, args)
+  },
+  getUserString: function(userId, key, args) {
+    return API.getPlugin('i18n.js').getUserString(userId, key, args)
+  },
+  getUserConfig: function(userId, key) {
+    if(!users[userId]) return null
+    return users[userId][key]
+  },
+  setUserConfig: function(userId, key, value) {
+    if(!users[userId]) return
+    users[userId][key] = value
+    API.getPlugin('google-sheets.js').update('users!A1', [[JSON.stringify(users)]])
   },
   addCommand: function(command, callback, help) {
     listeners.command[command] = {callback: callback, help: help}
@@ -166,7 +185,7 @@ bot.on('message', (msg) => {
 })
 
 bot.onText(new RegExp('^/(plugins)(@' + botId + ')?$'), (msg, match) => {
-  let result = 'Installed plugins:'
+  let result = API.getUserString(msg.from.id, MSG_PLUGIN_LIST, [])
   for(let key in plugins) {
     result += '\n- ' + key
   }
@@ -183,14 +202,13 @@ bot.onText(new RegExp('^/(help)(@' + botId + ')?( (.*))?$'), (msg, match) => {
         if(help) {
           result += help
         } else {
-          result += MSG_NO_HELP
+          result += API.getUserString(msg.from.id, MSG_NO_HELP, [])
         }
         break
       }
     }
   } else {
-    result += '사용법, Usage: /help@' + botId + ' <command>\n'
-    result += '명령어 목록, Commands list:'
+    result += API.getUserString(msg.from.id, MSG_HELP_USAGE, [botId])
     for(let cmd in listeners.command) {
       result += '\n- ' + cmd
     }
@@ -220,4 +238,7 @@ fs.readdir(config.pluginDir, (err, files) => {
   for(let name in plugins) {
     if(plugins[name] && plugins[name].init) plugins[name].init()
   }
+  API.getPlugin('google-sheets.js').select('users!A:A', (err, rows) => {
+    users = JSON.parse(rows[0])
+  })
 })

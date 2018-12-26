@@ -1,5 +1,6 @@
 module.exports = {
   pluginDir: './plugins/',
+  localeDir: './locales/',
   token: process.env.BOT_TOKEN,
   botId: process.env.BOT_NAME,
   botAdmin: process.env.BOT_ADMIN,
