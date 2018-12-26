@@ -31,17 +31,7 @@ const parseArgs = function(args) {
 }
 
 const insertText = function(text, username) {
-  sheets.spreadsheets.values.append({
-    spreadsheetId: config.sheetId,
-    range: 'data',
-    valueInputOption: 'USER_ENTERED',
-    resource: {
-      values: [[text, username]]
-    },
-  }, (err, res) => {
-    if(err)
-      console.error('Google Sheets API returned an error: ' + err)
-  })
+  API.getPlugin('google-sheets.js').insert('chatbot_data', [[text, username]])
 }
 
 const learnTexts = function(texts) {
@@ -54,20 +44,13 @@ const learnTexts = function(texts) {
 
 const reload = function() {
   chatbot.reset()
-  sheets.spreadsheets.values.get({
-    spreadsheetId: config.sheetId,
-    range: 'data!A:A',
-  }, (err, res) => {
-    if(err)
-      return console.error('Google Sheets API returned an error: ' + err)
-    const rows = res.data.values
+  API.getPlugin('google-sheets.js').select('chatbot_data!A:A', (err, rows) => {
     if(rows.length) {
       rows.forEach(row => {
-      learnTexts(row[0])
+        learnTexts(row[0])
       })
     }
   })
-
 }
 
 const onChat = function(stream) {
@@ -168,7 +151,7 @@ const onFlushRequest = function(stream) {
 const logChat = function(text, reply) {
   sheets.spreadsheets.values.append({
     spreadsheetId: config.sheetId,
-    range: 'log',
+    range: 'chatbot_log',
     valueInputOption: 'USER_ENTERED',
     resource: {
       values: [[text, reply]]
@@ -188,10 +171,12 @@ module.exports = function(botApi) {
   API.addCommand('chadmin', onAdmin)
   API.addCommand('flushrequest', onFlushRequest, '사용법: /flushrequest\n봇의 관리자에게 학습 확정 요청을 보냅니다.')
 
-  const jwtClient = new google.auth.JWT(config.googleClientEmail, null, config.googlePrivateKey.replace(/\\n/g, '\n'), SCOPES)
-  jwtClient.authorize()
-  sheets = google.sheets({version: 'v4', auth: jwtClient})
-
-  reload()
-
+  return {
+    init: () => {
+        const jwtClient = new google.auth.JWT(config.googleClientEmail, null, config.googlePrivateKey.replace(/\\n/g, '\n'), SCOPES)
+        jwtClient.authorize()
+        sheets = google.sheets({version: 'v4', auth: jwtClient})
+        reload()
+    },
+  }
 }

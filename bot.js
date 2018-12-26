@@ -217,4 +217,7 @@ fs.readdir(config.pluginDir, (err, files) => {
     if(file.endsWith('.js'))
       registerPlugin(file)
   })
+  for(let name in plugins) {
+    if(plugins[name] && plugins[name].init) plugins[name].init()
+  }
 })
