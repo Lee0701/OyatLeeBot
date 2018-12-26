@@ -45,7 +45,7 @@ const API = {
     return users[userId][key]
   },
   setUserConfig: function(userId, key, value) {
-    if(!users[userId]) return
+    if(!users[userId]) users[userId] = {}
     users[userId][key] = value
     API.getPlugin('google-sheets.js').update('users!A1', [[JSON.stringify(users)]])
   },
@@ -224,8 +224,7 @@ bot.onText(new RegExp('^/(config)(@' + botId + ')?( (.*))?$'), (msg, match) => {
   if(args && args.length >= 2) {
     const key = args[0]
     const value = args[1]
-    if(!users[msg.from.id]) users[msg.from.id] = {}
-    users[msg.from.id][key] = value
+    API.setUserConfig(msg.from.id, key, value)
     API.sendMessage(msg.chat.id, API.getUserString(msg.from.id, MSG_CONFIG_SET, []), {reply_to_message_id: msg.message_id})
   } else {
     API.sendMessage(msg.chat.id, API.getUserString(msg.from.id, MSG_CONFIG_USAGE, [botId]), {reply_to_message_id: msg.message_id})
