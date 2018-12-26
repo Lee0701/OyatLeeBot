@@ -16,6 +16,8 @@ const MAX_LENGTH = 4096
 const MSG_PLUGIN_LIST = 'bot_plugin_list'
 const MSG_NO_HELP = 'bot_no_help'
 const MSG_HELP_USAGE = 'bot_help_usage'
+const MSG_CONFIG_USAGE = 'bot_config_usage'
+const MSG_CONFIG_SET = 'bot_config_set'
 
 let plugins = {}
 let listeners = {
@@ -214,6 +216,20 @@ bot.onText(new RegExp('^/(help)(@' + botId + ')?( (.*))?$'), (msg, match) => {
     }
   }
   API.sendMessage(msg.chat.id, result, {reply_to_message_id: msg.message_id})
+})
+
+bot.onText(new RegExp('^/(config)(@' + botId + ')?( (.*))?$'), (msg, match) => {
+  let args = match[4]
+  if(args) args = args.split(' ')
+  if(args && args.length >= 2) {
+    const key = args[0]
+    const value = args[1]
+    if(!users[msg.from.id]) users[msg.from.id] = {}
+    users[msg.from.id][key] = value
+    API.sendMessage(msg.chat.id, API.getUserString(msg.from.id, MSG_CONFIG_SET, []), {reply_to_message_id: msg.message_id})
+  } else {
+    API.sendMessage(msg.chat.id, API.getUserString(msg.from.id, MSG_CONFIG_USAGE, [botId]), {reply_to_message_id: msg.message_id})
+  }
 })
 
 bot.on('polling_error', (err) => {

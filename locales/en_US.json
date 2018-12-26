@@ -1,5 +1,7 @@
 {
   "bot_plugin_list": "Installed plugins:",
   "bot_no_help": "Help not found for this command.",
-  "bot_help_usage": "Usage: /help@{{0}} <command>\nCommands list:"
+  "bot_help_usage": "Usage: /help@{{0}} <command>\nCommands list:",
+  "bot_config_usage": "Usage: /config@{{0}} <key> <value>",
+  "bot_config_set": "Config set."
 }

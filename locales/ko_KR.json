@@ -1,5 +1,7 @@
 {
   "bot_plugin_list": "설치된 플러그인 목록:",
   "bot_no_help": "이 명령어에 대한 도움말을 찾을 수 없습니다.",
-  "bot_help_usage": "사용법: /help@{{0}} <command>\n모든 명령어 목록:"
+  "bot_help_usage": "사용법: /help@{{0}} <command>\n모든 명령어 목록:",
+  "bot_config_usage": "사용법: /config@{{0}} <항목> <값>",
+  "bot_config_set": "설정이 저장되었습니다."
 }

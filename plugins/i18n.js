@@ -6,7 +6,7 @@ let config = require('../config.js')
 
 const FALLBACK_LOCALE = 'en_US'
 const MSG_LOCALE_ERROR = 'FATAL ERROR: FALLBACK LOCALE NOT FOUND!'
-const KEY = 'i18n_locale'
+const KEY = 'locale'
 
 let strings = {}
 let users = {}
@@ -29,7 +29,7 @@ const addLocale = function(name) {
 }
 
 const getString = function(locale, key, args) {
-  if(!strings[locale]) {
+  if(!strings[locale] || !strings[locale][key]) {
     if(strings[FALLBACK_LOCALE]) locale = FALLBACK_LOCALE
     else return MSG_LOCALE_ERROR
   }
