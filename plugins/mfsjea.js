@@ -6,7 +6,7 @@ const mfsjea = require('./mfsjea/mfsjea.js')
 const onMessage = function(msg) {
   if(!msg.text)
     return false
-  
+
   const candidate = msg.text.replace(/[가-힣ㄱ-ㅎㅏ-ㅣᄀ-하-ᅵᆨ-ᇂ]/g, '')
   if(mfsjea.count2350(msg.text) < msg.text.length/3) {
     const result = mfsjea.jeamfs(candidate)
@@ -40,4 +40,9 @@ module.exports = function(botApi) {
   API = botApi
   API.addListener(2000, onMessage)
   API.addInline(2000, onInline)
+  return {
+    auto: mfsjea.jeamfs,
+    list: mfsjea.jeamfsList,
+    count2350: mfsjea.count2350,
+  }
 }

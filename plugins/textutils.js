@@ -85,4 +85,5 @@ module.exports = function(botApi, botConfig) {
   API.addCommand('lower|소문자', onLower)
   API.addCommand('asdf', onAsdf)
   API.addCommand('grep', onGrep)
+  API.addCommand('mfsjea', (stream) => stream.write(API.getPlugin('mfsjea.js').list(stream.args).filter(item => item.score >= 0).map(item => '- ' + item.str + ' (' + item.name + ')').join('\n')))
 }

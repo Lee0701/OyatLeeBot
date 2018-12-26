@@ -25,6 +25,9 @@ let listeners = {
 }
 
 const API = {
+  getPlugin: function(name) {
+    return plugins[name]
+  },
   addCommand: function(command, callback, help) {
     listeners.command[command] = {callback: callback, help: help}
   },
@@ -69,8 +72,7 @@ const API = {
 
 const registerPlugin = function(name) {
   const plugin = require(config.pluginDir + name)
-  plugins[name] = plugin
-  plugin(API, config)
+  plugins[name] = plugin(API, config)
 }
 
 const matchCommand = function(msg) {

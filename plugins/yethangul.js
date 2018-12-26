@@ -33,4 +33,7 @@ module.exports = function(botApi) {
   API = botApi
   API.addCommand(yetCommands, onYet, '사용법: /yet <자모분리 옛한글>\n주어진 자모들로 옛한글을 조합합니다.')
   API.addInline(1000, onInline)
+  return {
+    yet: yet,
+  }
 }
