@@ -18,6 +18,8 @@ const MSG_NO_HELP = 'bot_no_help'
 const MSG_HELP_USAGE = 'bot_help_usage'
 const MSG_CONFIG_USAGE = 'bot_config_usage'
 const MSG_CONFIG_SET = 'bot_config_set'
+const MSG_INVALID_CONFIG_KEY = 'bot_invalid_config_key'
+const MSG_INVALID_CONFIG_VALUE = 'bot_invalid_config_value'
 
 let plugins = {}
 let listeners = {
@@ -27,6 +29,7 @@ let listeners = {
   stream: {},
   read: {}
 }
+let configs = {}
 
 let users = {}
 
@@ -48,6 +51,9 @@ const API = {
     if(!users[userId]) users[userId] = {}
     users[userId][key] = value
     API.getPlugin('google-sheets.js').update('users!A1', [[JSON.stringify(users)]])
+  },
+  addConfig: function(key, values) {
+    configs[key] = values
   },
   addCommand: function(command, callback, help) {
     listeners.command[command] = {callback: callback, help: help}
@@ -224,8 +230,16 @@ bot.onText(new RegExp('^/(config)(@' + botId + ')?( (.*))?$'), (msg, match) => {
   if(args && args.length >= 2) {
     const key = args[0]
     const value = args[1]
-    API.setUserConfig(msg.from.id, key, value)
-    API.sendMessage(msg.chat.id, API.getUserString(msg.from.id, MSG_CONFIG_SET, []), {reply_to_message_id: msg.message_id})
+    if(configs[key]) {
+      if(configs[key].length > 0 && configs[key].includes(value) || configs[key].length == 0) {
+        API.setUserConfig(msg.from.id, key, value)
+        API.sendMessage(msg.chat.id, API.getUserString(msg.from.id, MSG_CONFIG_SET, []), {reply_to_message_id: msg.message_id})
+      } else {
+        API.sendMessage(msg.chat.id, API.getUserString(msg.from.id, MSG_INVALID_CONFIG_VALUE, []), {reply_to_message_id: msg.message_id})
+      }
+    } else {
+      API.sendMessage(msg.chat.id, API.getUserString(msg.from.id, MSG_INVALID_CONFIG_KEY, []), {reply_to_message_id: msg.message_id})
+    }
   } else {
     API.sendMessage(msg.chat.id, API.getUserString(msg.from.id, MSG_CONFIG_USAGE, [botId]), {reply_to_message_id: msg.message_id})
   }

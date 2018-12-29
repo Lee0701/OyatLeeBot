@@ -6,6 +6,7 @@ let config = require('../config.js')
 
 const FALLBACK_LOCALE = 'en_US'
 const MSG_LOCALE_ERROR = 'FATAL ERROR: FALLBACK LOCALE NOT FOUND!'
+const MSG_STRING_ERROR = 'FATAL ERROR: STRING NOT FOUND'
 const KEY = 'locale'
 
 let strings = {}
@@ -18,14 +19,13 @@ const reload = function() {
     files.forEach(file => {
       if(file.endsWith('.json')) addLocale(file)
     })
+    API.addConfig('locale', Object.keys(strings))
   })
 }
 
 const addLocale = function(name) {
-  fs.readFile(config.localeDir + name, 'utf8', (err, data) => {
-    if(err) return
-    strings[name.substring(0, name.length-5)] = JSON.parse(data)
-  })
+  const data = fs.readFileSync(config.localeDir + name, 'utf8')
+  strings[name.substring(0, name.length-5)] = JSON.parse(data)
 }
 
 const getString = function(locale, key, args) {
@@ -33,6 +33,7 @@ const getString = function(locale, key, args) {
     if(strings[FALLBACK_LOCALE]) locale = FALLBACK_LOCALE
     else return MSG_LOCALE_ERROR
   }
+  if(!strings[locale][key]) return MSG_STRING_ERROR
   return strings[locale][key].replace(/{{([0-9]+)}}/g, (match, num) => args[parseInt(num)])
 }
 
