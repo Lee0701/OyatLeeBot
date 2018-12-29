@@ -43,8 +43,9 @@ const API = {
   getUserString: function(userId, key, args) {
     return API.getPlugin('i18n.js').getUserString(userId, key, args)
   },
-  getUserConfig: function(userId, key) {
-    if(!users[userId]) return null
+  getUserConfig: function(userId, key, defaultValue = null) {
+    if(!users[userId]) return defaultValue
+    if(!users[userId][key]) return defaultValue
     return users[userId][key]
   },
   setUserConfig: function(userId, key, value) {
@@ -225,8 +226,13 @@ bot.onText(new RegExp('^/(help)(@' + botId + ')?( (.*))?$'), (msg, match) => {
 })
 
 bot.onText(new RegExp('^/(config)(@' + botId + ')?( (.*))?$'), (msg, match) => {
-  let args = match[4]
-  if(args) args = args.split(' ')
+  const regex = RegExp('([^\\"]\\S*|".+?")\\s*', 'g')
+  let args = []
+  while(true) {
+    const m = regex.exec(match[4])
+    if(!m) break
+    else args.push(m[1].replace(/"/g, ''))
+  }
   if(args && args.length >= 2) {
     const key = args[0]
     const value = args[1]

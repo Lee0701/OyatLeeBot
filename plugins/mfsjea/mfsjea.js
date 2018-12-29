@@ -73,7 +73,7 @@ const jeamfsList = function(str) {
   ALPHABET_LAYOUTS.forEach(alphabet => {
     HANGUL_LAYOUTS.forEach(hangul => {
       const result = jeamfsORdudgks(str, alphabet, hangul)
-      results.push({name: alphabet.name + ' - ' + hangul.name, str: result, count: count2350(result), score: count2350(result)*10 + countNumbers(result) + countRegex(result, REGEX_PARENTHESIS)*10 - countRegex(result, REGEX_JAMO)*50})
+      results.push({source: alphabet.name, destination: hangul.name, str: result, count: count2350(result), score: count2350(result)*10 + countNumbers(result) + countRegex(result, REGEX_PARENTHESIS)*10 - countRegex(result, REGEX_JAMO)*50})
     })
   })
   return results
