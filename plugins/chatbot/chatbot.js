@@ -1,8 +1,8 @@
-const twtkr = require('node-twitter-korean-text')
+const okt = require('open-korean-text-node').default
 const https = require('https')
 
-const tokenize = (text) => twtkr.tokenizeSync(twtkr.normalizeSync(text))
-const tokenizeJson = (text) => twtkr.tokensToJsonArraySync(twtkr.tokenizeSync(twtkr.normalizeSync(text)), true)
+const tokenize = (text) => okt.tokenizeSync(okt.normalizeSync(text))
+const tokenizeJson = (text) => okt.tokensToJsonArraySync(okt.tokenizeSync(okt.normalizeSync(text)), true)
 
 let dictionary = {}
 let reverseDictionary = {}
@@ -51,11 +51,11 @@ const makeReply = function(text, learn=false, make=true) {
   if(learn && !make) {
     const split = text.split(/ ?\-\> ?/)
     if(split.length == 2) {
-      const fromTokens = twtkr.tokensToJsonArraySync(tokenize(split[0]))
+      const fromTokens = okt.tokensToJsonArraySync(tokenize(split[0]))
       let fromKeyword = getKeywords(fromTokens)
       if(fromKeyword.length == 0 || fromKeyword[0] == '')
         fromKeyword = fromTokens.map(token => token.text + ':' + token.koreanPos)
-      const toTokens = twtkr.tokensToJsonArraySync(tokenize(split[1]))
+      const toTokens = okt.tokensToJsonArraySync(tokenize(split[1]))
       let toKeyword = getKeywords(toTokens)
       if(toKeyword.length == 0 || toKeyword[0] == '')
         toKeyword = toTokens.map(token => token.text + ':' + token.koreanPos)
@@ -63,17 +63,17 @@ const makeReply = function(text, learn=false, make=true) {
       text = split[1]
     }
   }
-  
+
   const tokens = tokenize(text)
-  const tokensJson = twtkr.tokensToJsonArraySync(tokens, true)
+  const tokensJson = okt.tokensToJsonArraySync(tokens, true)
   const tokenTexts = tokensJson.map(token => token.text + ':' + token.koreanPos)
-  
+
   if(learn)
     learnSentence(tokenTexts)
-  
+
   if(!make)
     return
-  
+
   let keyWords = getKeywords(tokensJson)
   if(keyWords.length == 0 || keyWords[0] == '')
     keyWords = tokensJson.map(token => token.text + ':' + token.koreanPos)
@@ -82,7 +82,7 @@ const makeReply = function(text, learn=false, make=true) {
     keyWords = converted[Math.round(Math.random() * (converted.length - 1))].split(';')
   if(keyWords.length == 0 || keyWords[0] == '')
     keyWords = tokensJson.map(token => token.text + ':' + token.koreanPos)
-  
+
   let start
   let idx = 0
   do {
@@ -92,7 +92,7 @@ const makeReply = function(text, learn=false, make=true) {
   keyWords.splice(keyWords.indexOf(start), 1)
   let key = [start]
   let sentence = [start]
-  
+
   for(let i = 0 ; i < 20 ; i++) {
     if(key.length >= SEARCH_LENGTH)
       key.pop()
@@ -125,11 +125,11 @@ const makeReply = function(text, learn=false, make=true) {
       break
     sentence.unshift(found)
   }
-  
+
   key = sentence.slice((sentence.length > SEARCH_LENGTH) ? sentence.length-SEARCH_LENGTH : 0, sentence.length).filter(k => k != '')
-  
+
   if(key == undefined) return '?'
-  
+
   for(let i = 0 ; i < 20 ; i++) {
     while(key.length >= SEARCH_LENGTH)
       key.splice(0, 1)

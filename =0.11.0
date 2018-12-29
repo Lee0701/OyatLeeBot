@@ -1,0 +1,5 @@
+
+> java@0.8.0 install /Users/hyegyulee/Dev/node/OyatLeeBot/node_modules/node-twitter-korean-text/node_modules/java
+> node-gyp rebuild
+
+  CXX(target) Release/obj.target/nodejavabridge_bindings/src/java.o

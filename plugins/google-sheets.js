@@ -39,7 +39,7 @@ const select = function(range, callback) {
 }
 
 const update = function(range, values, callback) {
-  sheets.spreadsheets.values.append({
+  sheets.spreadsheets.values.update({
     spreadsheetId: config.sheetId,
     range: range,
     valueInputOption: 'USER_ENTERED',
