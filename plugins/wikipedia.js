@@ -11,7 +11,6 @@ const onWiki = function(stream) {
   let title = undefined
   if(stream.args) {
     const args = parse(stream.args.split(' '))
-    console.log(args)
     lang = args['--lang'] || args['-l'] || 'ko'
     format = args['--format'] || args['-f'] || 'full'
     title = args.rest

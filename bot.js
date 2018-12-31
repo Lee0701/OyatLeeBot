@@ -134,36 +134,9 @@ const matchCommand = function(msg) {
       const regexp = new RegExp('^\\/(' + cmd + ')(?:@' + botId + ')?(?: ([\\s\\S]*))?$', 'm')
       const match = regexp.exec(command)
       if(match) {
-        const prev = (streams.length > 0) ? streams[streams.length-1] : undefined
+        const previous = (streams.length > 0) ? streams[streams.length-1] : undefined
 
-        const stream = {
-          msg: msg,
-          command: match[1],
-          args: match[2]
-        }
-
-        stream.read = (i == 0)
-            ? ((callback) => {
-              API.sendMessage(msg.chat.id, 'INPUT', {reply_to_message_id: msg.message_id, parse_mode: 'HTML', reply_markup: {force_reply: true, selective: true}}).then(m => {
-                const readId = m.chat.id + ',' + m.message_id
-                listeners.read[readId] = (text) => callback(text)
-                setTimeout(() => {
-                  if(listeners.read[readId]) {
-                    delete listeners.read[readId]
-                    bot.deleteMessage(m.chat.id, m.message_id)
-                  }
-                }, INPUT_TIMEOUT)
-              })
-            })
-            : ((callback) => {
-              stream.readCallback = callback
-            })
-        stream.write = (i == commands.length-1)
-            ? ((text, delayed=false) => API.sendMessage(msg.chat.id, text, {reply_to_message_id: msg.message_id, parse_mode: 'HTML'}, delayed))
-            : ((text, delayed=false) => {
-              if(prev && prev.readCallback)
-                prev.readCallback(text)
-            })
+        const stream = new Stream(msg, match[1], match[2], previous, i == commands.length-1, i == 0)
 
         cmds.push({callback: listeners.command[cmd].callback, stream: stream})
         streams.push(stream)
@@ -176,6 +149,44 @@ const matchCommand = function(msg) {
     setTimeout(() => cmd.callback(cmd.stream), 0)
   }
 
+}
+
+const Stream = function(msg, command, args, previous=undefined, first=false, last=false) {
+  this.msg = msg
+  this.command = command
+  this.args = args
+  this.buffer = []
+  this.writeBuffer = (msg) => this.buffer.push(msg)
+  if(last) {
+    this.read = (callback) => {
+      API.sendMessage(msg.chat.id, 'INPUT>', {reply_to_message_id: msg.message_id, parse_mode: 'HTML', reply_markup: {force_reply: true, selective: true}}).then(m => {
+        const readId = m.chat.id + ',' + m.message_id
+        listeners.read[readId] = (text) => callback(text)
+        setTimeout(() => {
+          if(listeners.read[readId]) {
+            delete listeners.read[readId]
+            bot.deleteMessage(m.chat.id, m.message_id)
+          }
+        }, INPUT_TIMEOUT)
+      })
+    }
+  } else {
+    this.read = (callback) => {
+      const readBuffer = () => this.buffer.length > 0 ? callback(this.buffer.splice(0, 1)[0]) : setTimeout(readBuffer, 100)
+      readBuffer()
+    }
+  }
+  if(first) {
+    this.write = (text, delayed=false) => {
+      API.sendMessage(msg.chat.id, text, {reply_to_message_id: msg.message_id, parse_mode: 'HTML'}, delayed)
+    }
+  } else {
+    if(previous && previous.writeBuffer) {
+      this.write = (text, delayed=false) => {
+        previous.writeBuffer(text)
+      }
+    }
+  }
 }
 
 bot.on('inline_query', (query) => {
