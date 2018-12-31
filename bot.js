@@ -13,6 +13,8 @@ const bot = new TelegramBot(token, {polling: true})
 
 const INPUT_TIMEOUT = 60000
 const MAX_LENGTH = 4096
+
+const MSG_ACCESS_DENIED = 'bot_access_denied'
 const MSG_PLUGIN_LIST = 'bot_plugin_list'
 const MSG_NO_HELP = 'bot_no_help'
 const MSG_HELP_USAGE = 'bot_help_usage'
@@ -29,7 +31,8 @@ let listeners = {
   stream: {},
   read: {}
 }
-let configs = {}
+let userConfigs = {}
+let groupConfigs = {}
 
 let users = {}
 let groups = {}
@@ -54,7 +57,7 @@ const API = {
     users[userId][key] = value
     API.getPlugin('google-sheets.js').update('users!A1', [[JSON.stringify(users)]])
   },
-  getGroupConfig: function(chatId, key, defaultValue - null) {
+  getGroupConfig: function(chatId, key, defaultValue = null) {
     if(!groups[chatId] || !groups[chatId][key]) return defaultValue
     return groups[chatId][key]
   },
@@ -63,8 +66,11 @@ const API = {
       groups[chatId][key] = value
       API.getPlugin('google-sheets.js').update('users!A2', [[JSON.stringify(groups)]])
   },
-  addConfig: function(key, values) {
-    configs[key] = values
+  addUserConfigKey: function(key, values) {
+    userConfigs[key] = values
+  },
+  addGroupConfigKey: function(key, values) {
+    groupConfigs[key] = values
   },
   addCommand: function(command, callback, help) {
     listeners.command[command] = {callback: callback, help: help}
@@ -246,8 +252,8 @@ bot.onText(new RegExp('^/(config)(@' + botId + ')?( (.*))?$'), (msg, match) => {
   if(args && args.length >= 2) {
     const key = args[0]
     const value = args[1]
-    if(configs[key]) {
-      if(configs[key].length > 0 && configs[key].includes(value) || configs[key].length == 0) {
+    if(userConfigs[key]) {
+      if(userConfigs[key].length > 0 && userConfigs[key].includes(value) || userConfigs[key].length == 0) {
         API.setUserConfig(msg.from.id, key, value)
         API.sendMessage(msg.chat.id, API.getUserString(msg.from.id, MSG_CONFIG_SET, []), {reply_to_message_id: msg.message_id})
       } else {
@@ -260,6 +266,43 @@ bot.onText(new RegExp('^/(config)(@' + botId + ')?( (.*))?$'), (msg, match) => {
     API.sendMessage(msg.chat.id, API.getUserString(msg.from.id, MSG_CONFIG_USAGE, [botId]), {reply_to_message_id: msg.message_id})
   }
 })
+
+bot.onText(new RegExp('^/(groupconfig)(@' + botId + ')?( (.*))?$'), (msg, match) => {
+  bot.getChatMember(msg.chat.id, msg.from.id).then((member) => {
+    if(!checkAdmin(member)) {
+      API.sendMessage(msg.chat.id, API.getUserString(msg.from.id, MSG_ACCESS_DENIED, []), {reply_to_message_id: msg.message_id})
+      return
+    }
+    const regex = RegExp('([^\\"]\\S*|".+?")\\s*', 'g')
+    let args = []
+    while(true) {
+      const m = regex.exec(match[4])
+      if(!m) break
+      else args.push(m[1].replace(/"/g, ''))
+    }
+    if(args && args.length >= 2) {
+      const key = args[0]
+      const value = args[1]
+      if(groupConfigs[key]) {
+        if(groupConfigs[key].length > 0 && groupConfigs[key].includes(value) || groupConfigs[key].length == 0) {
+          API.setGroupConfig(msg.chat.id, key, value)
+          API.sendMessage(msg.chat.id, API.getUserString(msg.from.id, MSG_CONFIG_SET, []), {reply_to_message_id: msg.message_id})
+        } else {
+          API.sendMessage(msg.chat.id, API.getUserString(msg.from.id, MSG_INVALID_CONFIG_VALUE, []), {reply_to_message_id: msg.message_id})
+        }
+      } else {
+        API.sendMessage(msg.chat.id, API.getUserString(msg.from.id, MSG_INVALID_CONFIG_KEY, []), {reply_to_message_id: msg.message_id})
+      }
+    } else {
+      API.sendMessage(msg.chat.id, API.getUserString(msg.from.id, MSG_CONFIG_USAGE, [botId]), {reply_to_message_id: msg.message_id})
+    }
+  })
+})
+
+const checkAdmin = function(member) {
+  if(member.status === 'creator' || member.status === 'administrator') return true
+  else return false
+}
 
 bot.on('polling_error', (err) => {
   console.log(err)

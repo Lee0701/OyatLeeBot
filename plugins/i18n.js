@@ -19,7 +19,7 @@ const reload = function() {
     files.forEach(file => {
       if(file.endsWith('.json')) addLocale(file)
     })
-    API.addConfig('locale', Object.keys(strings))
+    API.addUserConfigKey('locale', Object.keys(strings))
   })
 }
 

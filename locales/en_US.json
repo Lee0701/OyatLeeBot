@@ -1,4 +1,5 @@
 {
+  "bot_access_denied": "Access denied.",
   "bot_plugin_list": "Installed plugins:",
   "bot_no_help": "Help not found for this command.",
   "bot_help_usage": "Usage: /help@{{0}} <command>\nCommands list:",

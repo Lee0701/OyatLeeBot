@@ -3,12 +3,20 @@ let API = undefined
 
 const mfsjea = require('./mfsjea/mfsjea.js')
 
+const CONFIG_KEY_ENABLE = 'mfsjea.enable'
+
+const CONFIG_KEY_USE = 'mfsjea.use'
 const CONFIG_KEY_SOURCE = 'mfsjea.source'
 const CONFIG_KEY_DESTINATION = 'mfsjea.destination'
 
 const onMessage = function(msg) {
-  if(!msg.text)
-    return false
+  if(!msg.text) return false
+
+  const enabled = API.getGroupConfig(msg.chat.id, CONFIG_KEY_ENABLE, 'true')
+  if(enabled == 'false') return false
+
+  const use = API.getUserConfig(msg.from.id, CONFIG_KEY_USE, 'true')
+  if(use == 'false') return false
 
   const candidate = msg.text.replace(/[가-힣ㄱ-ㅎㅏ-ㅣᄀ-하-ᅵᆨ-ᇂ]/g, '')
   if(mfsjea.count2350(msg.text) < msg.text.length/3) {
@@ -49,8 +57,10 @@ module.exports = function(botApi) {
   API = botApi
   API.addListener(2000, onMessage)
   API.addInline(2000, onInline)
-  API.addConfig(CONFIG_KEY_SOURCE, [])
-  API.addConfig(CONFIG_KEY_DESTINATION, [])
+  API.addUserConfigKey(CONFIG_KEY_USE, ['true', 'false'])
+  API.addUserConfigKey(CONFIG_KEY_SOURCE, [])
+  API.addUserConfigKey(CONFIG_KEY_DESTINATION, [])
+  API.addGroupConfigKey(CONFIG_KEY_ENABLE, ['true', 'false'])
   return {
     auto: mfsjea.jeamfs,
     list: mfsjea.jeamfsList,
