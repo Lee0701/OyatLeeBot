@@ -32,6 +32,7 @@ let listeners = {
 let configs = {}
 
 let users = {}
+let groups = {}
 
 const API = {
   getPlugin: function(name) {
@@ -52,6 +53,15 @@ const API = {
     if(!users[userId]) users[userId] = {}
     users[userId][key] = value
     API.getPlugin('google-sheets.js').update('users!A1', [[JSON.stringify(users)]])
+  },
+  getGroupConfig: function(chatId, key, defaultValue - null) {
+    if(!groups[chatId] || !groups[chatId][key]) return defaultValue
+    return groups[chatId][key]
+  },
+  setGroupConfig: function(chatId, key, value) {
+      if(!groups[chatId]) groups[chatId] = {}
+      groups[chatId][key] = value
+      API.getPlugin('google-sheets.js').update('users!A2', [[JSON.stringify(groups)]])
   },
   addConfig: function(key, values) {
     configs[key] = values
