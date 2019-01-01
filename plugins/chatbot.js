@@ -10,9 +10,9 @@ const SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 let sheets = undefined
 
-const MSG_LEARNING_NOT_ENABLED = 'ERROR: 학습 불가 그룹, Learning is not enabled for group.'
-const MSG_NOT_ADMIN = 'ERROR: 관리자 권한 필요, Admin privilege required.'
-const MSG_ACCESS_DENIED = 'ERROR: 접근 거부, Access denied.'
+const MSG_ACCESS_DENIED = 'bot_access_denied'
+const HELP_CHAT = 'chatbot_help_chat'
+const HELP_TEACH = 'chatbot_help_teach'
 
 const parseArgs = function(args) {
   let result = 'where '
@@ -87,9 +87,10 @@ const onAdmin = function(stream) {
   const chatId = stream.msg.chat.id
   const text = stream.args
   if(!BOT_ADMIN.includes(stream.msg.from.id)) {
-    stream.write(MSG_ACCESS_DENIED)
+    stream.write(API.getUserString(stream.msg.from.id, MSG_ACCESS_DENIED, []))
     return
   }
+  if(!text) return
   const args = text.split(' ')
   if(text) {
     if(args[0] == 'reload') {
@@ -166,10 +167,9 @@ module.exports = function(botApi) {
   API = botApi
   BOT_ADMIN = JSON.parse(config.botAdmin)
   API.addListener(700, onMessage)
-  API.addCommand('ch|챗', onChat, '사용법: /ch <메시지>\n채팅봇에게 말을 겁니다.\nTIP: 봇의 메시지에 답장을 해도 대화할 수 있습니다.')
-  API.addCommand('teach', onTeach, '사용법: /teach (<질문> -> ) <답변>\n채팅봇에게 말을 가르칩니다.')
+  API.addCommand('ch|챗', onChat, HELP_CHAT)
+  API.addCommand('teach', onTeach, HELP_TEACH)
   API.addCommand('chadmin', onAdmin)
-  API.addCommand('flushrequest', onFlushRequest, '사용법: /flushrequest\n봇의 관리자에게 학습 확정 요청을 보냅니다.')
 
   return {
     init: () => {
@@ -178,5 +178,6 @@ module.exports = function(botApi) {
         sheets = google.sheets({version: 'v4', auth: jwtClient})
         reload()
     },
+    locales: 'chatbot/locales/',
   }
 }

@@ -1,0 +1,4 @@
+{
+  "chatbot_help_chat": "Usage: /ch <message>\nAsks a question to chatbot.\nTIP: You can also talk by replying to bot's message.",
+  "chatbot_help_teach": "Usage: /teach (<question> -> ) <answer>\nTeaches the chatbot."
+}
