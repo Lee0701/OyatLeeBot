@@ -235,7 +235,10 @@ bot.onText(new RegExp('^/(help)(@' + botId + ')?( (.*))?$'), (msg, match) => {
     for(let cmd in listeners.command) {
       if(new RegExp('^(' + cmd + ')$').exec(command)) {
         const help = listeners.command[cmd].help
-        if(help) {
+        const helpString = API.getUserString(msg.from.id, help, [])
+        if(helpString) {
+          result += helpString
+        } else if(help) {
           result += help
         } else {
           result += API.getUserString(msg.from.id, MSG_NO_HELP, [])
@@ -335,7 +338,10 @@ fs.readdir(config.pluginDir, (err, files) => {
       registerPlugin(file)
   })
   for(let name in plugins) {
-    if(plugins[name] && plugins[name].init) plugins[name].init()
+    if(plugins[name]) {
+      if(plugins[name].init) plugins[name].init()
+      if(plugins[name].locales) API.getPlugin('i18n.js').load('./plugins/' + plugins[name].locales)
+    }
   }
   API.getPlugin('google-sheets.js').select('users!A:A', (err, rows) => {
     users = JSON.parse(rows[0])

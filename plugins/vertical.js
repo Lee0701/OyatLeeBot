@@ -3,6 +3,8 @@ let API = undefined
 
 const verticalCommands = '우종서|종서|vertical'
 
+const HELP_VERTICAL = 'vertical_help_vertical'
+
 const FULLWIDTHS = {
   '.': '。',
   ',': '、',
@@ -40,6 +42,9 @@ const onInline = function(query) {
 
 module.exports = function(botApi) {
   API = botApi
-  API.addCommand(verticalCommands, onVertical, '사용법: /vertical <텍스트>\n주어진 텍스트를 우종서로 변환합니다.')
+  API.addCommand(verticalCommands, onVertical, HELP_VERTICAL)
   API.addInline(1000, onInline)
+  return {
+    locales: "vertical/locales/",
+  }
 }

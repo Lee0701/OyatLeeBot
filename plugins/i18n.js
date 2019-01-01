@@ -9,23 +9,31 @@ const MSG_LOCALE_ERROR = 'FATAL ERROR: FALLBACK LOCALE NOT FOUND!'
 const MSG_STRING_ERROR = 'FATAL ERROR: STRING NOT FOUND'
 const KEY = 'locale'
 
+let dirs = []
 let strings = {}
-let users = {}
 
-const reload = function() {
-  strings = {}
-  fs.readdir(config.localeDir, (err, files) => {
+const load = function(localeDir) {
+  if(dirs.indexOf(localeDir) > -1) dirs.push(localeDir)
+  fs.readdir(localeDir, (err, files) => {
     if(err) return
     files.forEach(file => {
-      if(file.endsWith('.json')) addLocale(file)
+      if(file.endsWith('.json')) addLocale(localeDir, file)
     })
     API.addUserConfigKey('locale', Object.keys(strings))
   })
 }
 
-const addLocale = function(name) {
-  const data = fs.readFileSync(config.localeDir + name, 'utf8')
-  strings[name.substring(0, name.length-5)] = JSON.parse(data)
+const addLocale = function(localeDir, name) {
+  const data = fs.readFileSync(localeDir + name, 'utf8')
+  const locale = name.substring(0, name.length-5)
+  if(!strings[locale]) strings[locale] = {}
+  const parsed = JSON.parse(data)
+  for(let key in parsed) strings[locale][key] = parsed[key]
+}
+
+const reload = function() {
+  strings = {}
+  dirs.forEach(dir => load(dir))
 }
 
 const getString = function(locale, key, args) {
@@ -53,11 +61,12 @@ module.exports = function(botApi) {
   API = botApi
   return {
     init: () => {
-      reload()
+      load(config.localeDir)
     },
     getString: getString,
     getUserString: getUserString,
     getUserLocale: getUserLocale,
     setUserLocale: setUserLocale,
+    load: load,
   }
 }
