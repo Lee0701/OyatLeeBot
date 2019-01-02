@@ -2,7 +2,6 @@
 const fs = require('fs')
 
 let API = undefined
-let config = require('../config.js')
 
 const FALLBACK_LOCALE = 'en_US'
 const MSG_LOCALE_ERROR = 'FATAL ERROR: FALLBACK LOCALE NOT FOUND!'
@@ -61,7 +60,7 @@ module.exports = function(botApi) {
   API = botApi
   return {
     init: () => {
-      load(config.localeDir)
+      load(API.getConfig('localeDir'))
     },
     getString: getString,
     getUserString: getUserString,

@@ -9,8 +9,8 @@
     "googleapis": "^34.0.0",
     "node-gyp": "^3.8.0",
     "node-telegram-bot-api": "^0.30.0",
+    "npm": "^6.5.0",
     "open-korean-text-node": "^2.2.0",
-    "pg": "^7.7.1",
     "wtf_wikipedia": "^7.2.6"
   },
   "devDependencies": {},

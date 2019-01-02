@@ -1,17 +1,16 @@
 
 let API = undefined
 
-let config = require('../config.js')
-
 const {google} = require('googleapis')
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 let sheets = undefined
+let sheetId = undefined
 
 const MSG_ERROR = 'Google Sheets API returned an error: '
 
 const insert = function(range, values, callback) {
   sheets.spreadsheets.values.append({
-    spreadsheetId: config.sheetId,
+    spreadsheetId: sheetId,
     range: range,
     valueInputOption: 'USER_ENTERED',
     resource: {
@@ -27,7 +26,7 @@ const insert = function(range, values, callback) {
 
 const select = function(range, callback) {
   sheets.spreadsheets.values.get({
-    spreadsheetId: config.sheetId,
+    spreadsheetId: sheetId,
     range: range,
   }, (err, res) => {
     if(err) {
@@ -40,7 +39,7 @@ const select = function(range, callback) {
 
 const update = function(range, values, callback) {
   sheets.spreadsheets.values.update({
-    spreadsheetId: config.sheetId,
+    spreadsheetId: sheetId,
     range: range,
     valueInputOption: 'USER_ENTERED',
     resource: {
@@ -56,7 +55,7 @@ const update = function(range, values, callback) {
 
 const del = function(range, callback) {
   sheets.spreadsheets.values.clear({
-    spreadsheetId: config.sheetId,
+    spreadsheetId: sheetId,
     range: range,
   }, (err, res) => {
     if(err) {
@@ -69,9 +68,11 @@ const del = function(range, callback) {
 module.exports = function(botApi) {
   API = botApi
 
-    const jwtClient = new google.auth.JWT(config.googleClientEmail, null, config.googlePrivateKey.replace(/\\n/g, '\n'), SCOPES)
-    jwtClient.authorize()
-    sheets = google.sheets({version: 'v4', auth: jwtClient})
+  sheetId = API.getConfig('sheetId')
+
+  const jwtClient = new google.auth.JWT(API.getConfig('googleClientEmail'), null, API.getConfig('googlePrivateKey').replace(/\\n/g, '\n'), SCOPES)
+  jwtClient.authorize()
+  sheets = google.sheets({version: 'v4', auth: jwtClient})
 
   return {
     insert: insert,

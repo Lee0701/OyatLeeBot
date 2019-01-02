@@ -1,0 +1,15 @@
+[submodule "plugins/OyatLeeBot-yethangul"]
+	path = plugins/OyatLeeBot-yethangul
+	url = https://github.com/Lee0701/OyatLeeBot-yethangul.git
+[submodule "plugins/OyatLeeBot-textutils"]
+	path = plugins/OyatLeeBot-textutils
+	url = https://github.com/Lee0701/OyatLeeBot-textutils.git
+[submodule "plugins/OyatLeeBot-vertical"]
+	path = plugins/OyatLeeBot-vertical
+	url = https://github.com/Lee0701/OyatLeeBot-vertical.git
+[submodule "plugins/OyatLeeBot-wikipedia"]
+	path = plugins/OyatLeeBot-wikipedia
+	url = https://github.com/Lee0701/OyatLeeBot-wikipedia.git
+[submodule "plugins/OyatLeeBot-mfsjea"]
+	path = plugins/OyatLeeBot-mfsjea
+	url = https://github.com/Lee0701/OyatLeeBot-mfsjea.git

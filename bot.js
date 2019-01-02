@@ -1,6 +1,8 @@
 
 const config = require('./config.js')
 
+const npm = require('npm')
+
 const http = require('http')
 const fs = require('fs')
 
@@ -38,14 +40,17 @@ let users = {}
 let groups = {}
 
 const API = {
+  getConfig: function(key) {
+    return config[key]
+  },
   getPlugin: function(name) {
-    return plugins[name]
+    return plugins[name].api
   },
   getString: function(locale, key, args) {
-    return API.getPlugin('i18n.js').getString(locale, key, args)
+    return API.getPlugin('i18n').getString(locale, key, args)
   },
   getUserString: function(userId, key, args) {
-    return API.getPlugin('i18n.js').getUserString(userId, key, args)
+    return API.getPlugin('i18n').getUserString(userId, key, args)
   },
   getUserConfig: function(userId, key, defaultValue = null) {
     if(!users[userId]) return defaultValue
@@ -55,7 +60,7 @@ const API = {
   setUserConfig: function(userId, key, value) {
     if(!users[userId]) users[userId] = {}
     users[userId][key] = value
-    API.getPlugin('google-sheets.js').update('users!A1', [[JSON.stringify(users)]])
+    API.getPlugin('google-sheets').update('users!A1', [[JSON.stringify(users)]])
   },
   getGroupConfig: function(chatId, key, defaultValue = null) {
     if(!groups[chatId] || !groups[chatId][key]) return defaultValue
@@ -64,7 +69,7 @@ const API = {
   setGroupConfig: function(chatId, key, value) {
       if(!groups[chatId]) groups[chatId] = {}
       groups[chatId][key] = value
-      API.getPlugin('google-sheets.js').update('users!A2', [[JSON.stringify(groups)]])
+      API.getPlugin('google-sheets').update('users!A2', [[JSON.stringify(groups)]])
   },
   addUserConfigKey: function(key, values) {
     userConfigs[key] = values
@@ -115,8 +120,33 @@ const API = {
 }
 
 const registerPlugin = function(name) {
-  const plugin = require(config.pluginDir + name)
-  plugins[name] = plugin(API, config)
+  const pluginDir = config.pluginDir + name + '/'
+  if(!fs.existsSync(pluginDir + 'plugin.json')) return
+  const data = fs.readFileSync(pluginDir + 'plugin.json', 'utf8')
+  const plugin = JSON.parse(data)
+  plugin.dir = pluginDir
+  plugin.loaded = false
+  plugins[plugin.name] = plugin
+  if(plugin.packages) {
+    npm.load((err) => {
+      if(err) {
+        console.log(err)
+        return
+      }
+      npm.commands.install(plugin.packages, (err, data) => {
+        if(err) {
+          console.log(err)
+          return
+        }
+        if(plugin.main) plugin.api = require(pluginDir + plugin.main)(API)
+        plugin.loaded = true
+      })
+      npm.on('log', msg => console.log)
+    })
+  } else {
+    if(plugin.main) plugin.api = require(pluginDir + plugin.main)(API)
+    plugin.loaded = true
+  }
 }
 
 const matchCommand = function(msg) {
@@ -148,7 +178,8 @@ const matchCommand = function(msg) {
   for(let cmd of cmds) {
     setTimeout(() => cmd.callback(cmd.stream), 0)
   }
-
+  if(cmds.length > 0) return true
+  else return false
 }
 
 const Stream = function(msg, command, args, previous=undefined, first=false, last=false) {
@@ -210,7 +241,7 @@ bot.on('message', (msg) => {
     }
   }
 
-  matchCommand(msg)
+  if(matchCommand(msg)) return
 
   for(let i in listeners.message) {
     for(let listener of listeners.message[i]) {
@@ -223,7 +254,7 @@ bot.on('message', (msg) => {
 bot.onText(new RegExp('^/(plugins)(@' + botId + ')?$'), (msg, match) => {
   let result = API.getUserString(msg.from.id, MSG_PLUGIN_LIST, [])
   for(let key in plugins) {
-    result += '\n- ' + key
+    result += '\n- ' + plugins[key].name
   }
   API.sendMessage(msg.chat.id, result, {reply_to_message_id: msg.message_id})
 })
@@ -334,16 +365,33 @@ fs.readdir(config.pluginDir, (err, files) => {
   if(err)
     return
   files.forEach(file => {
-    if(file.endsWith('.js'))
-      registerPlugin(file)
+    registerPlugin(file)
   })
-  for(let name in plugins) {
-    if(plugins[name]) {
-      if(plugins[name].init) plugins[name].init()
-      if(plugins[name].locales) API.getPlugin('i18n.js').load('./plugins/' + plugins[name].locales)
-    }
+  const checkLoaded = () => {
+    if(!Object.values(plugins).every(plugin => plugin.loaded)) setTimeout(checkLoaded, 100)
+    else initPlugins()
   }
-  API.getPlugin('google-sheets.js').select('users!A:A', (err, rows) => {
+  checkLoaded()
+})
+
+const initPlugins = function() {
+  for(let key in plugins) {
+    const plugin = plugins[key]
+    if(plugin.localeDir) API.getPlugin('i18n').load(plugin.dir + plugin.localeDir)
+    if(plugin.api && plugin.api.init) plugin.api.init()
+  }
+  loadUsers()
+  loadGroups()
+}
+
+const loadUsers = function() {
+  API.getPlugin('google-sheets').select('users!A1:A1', (err, rows) => {
     users = JSON.parse(rows[0])
   })
-})
+}
+
+const loadGroups = function() {
+  API.getPlugin('google-sheets').select('users!A2:A2', (err, rows) => {
+    groups = JSON.parse(rows[0])
+  })
+}
