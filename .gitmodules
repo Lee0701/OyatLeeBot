@@ -13,3 +13,6 @@
 [submodule "plugins/OyatLeeBot-mfsjea"]
 	path = plugins/OyatLeeBot-mfsjea
 	url = https://github.com/Lee0701/OyatLeeBot-mfsjea.git
+[submodule "plugins/OyatLeeBot-chatbot"]
+	path = plugins/OyatLeeBot-chatbot
+	url = https://github.com/Lee0701/OyatLeeBot-chatbot.git
