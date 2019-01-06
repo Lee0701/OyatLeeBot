@@ -21,6 +21,7 @@ const insert = function(range, values, callback) {
       console.error(MSG_ERROR + err)
       if(callback) callback(err)
     }
+    if(callback) callback(null)
   })
 }
 
@@ -38,18 +39,36 @@ const select = function(range, callback) {
 }
 
 const update = function(range, values, callback) {
-  sheets.spreadsheets.values.update({
-    spreadsheetId: sheetId,
-    range: range,
-    valueInputOption: 'USER_ENTERED',
-    resource: {
-      values: values
-    },
-  }, (err, res) => {
+  if(typeof(values) != 'function') {
+    values = () => values
+  }
+  const worksheet = range.split('!')[0]
+  select(range, (err, rows) => {
     if(err) {
       console.error(MSG_ERROR + err)
       if(callback) callback(err)
     }
+    let count = 0
+    if(rows) {
+      rows.forEach((row, index) => {
+        const range = worksheet + '!' + 'A' + (index + 1) + ':' + 'Z' + (index + 1)
+        sheets.spreadsheets.values.update({
+          spreadsheetId: sheetId,
+          range: range,
+          valueInputOption: 'USER_ENTERED',
+          resource: {
+            values: values(row, index)
+          },
+        }, (err, res) => {
+          if(err) {
+            console.error(MSG_ERROR + err)
+            if(callback) callback(err)
+          }
+          count++
+        })
+      })
+    }
+    if(callback) callback(null, count)
   })
 }
 
@@ -62,6 +81,7 @@ const del = function(range, callback) {
       console.error(MSG_ERROR + err)
       if(callback) callback(err)
     }
+    if(callback) callback(null)
   })
 }
 

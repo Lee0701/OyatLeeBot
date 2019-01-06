@@ -60,7 +60,7 @@ const API = {
   setUserConfig: function(userId, key, value) {
     if(!users[userId]) users[userId] = {}
     users[userId][key] = value
-    API.getPlugin('google-sheets').update('users!A1', [[JSON.stringify(users)]])
+    storeUsers()
   },
   getGroupConfig: function(chatId, key, defaultValue = null) {
     if(!groups[chatId] || !groups[chatId][key]) return defaultValue
@@ -69,7 +69,7 @@ const API = {
   setGroupConfig: function(chatId, key, value) {
       if(!groups[chatId]) groups[chatId] = {}
       groups[chatId][key] = value
-      API.getPlugin('google-sheets').update('users!A2', [[JSON.stringify(groups)]])
+      storeGroups()
   },
   addUserConfigKey: function(key, values) {
     userConfigs[key] = values
@@ -128,7 +128,10 @@ const registerPlugin = function(name) {
   plugin.loaded = false
   plugins[plugin.name] = plugin
   if(plugin.packages) {
-    npm.load((err) => {
+    const options = {
+      'save': false,
+    }
+    npm.load(options, (err) => {
       if(err) {
         console.log(err)
         return
@@ -385,13 +388,37 @@ const initPlugins = function() {
 }
 
 const loadUsers = function() {
-  API.getPlugin('google-sheets').select('users!A1:A1', (err, rows) => {
-    users = JSON.parse(rows[0])
+  API.getPlugin('google-sheets').select('users!A:Z', (err, rows) => {
+    if(err || !rows) return
+    rows.forEach(row => {
+      users[row[0]] = JSON.parse(row[1])
+    })
+  })
+}
+
+const storeUsers = function() {
+  API.getPlugin('google-sheets').update('users!A:Z', (row, index) => [[row[0], JSON.stringify(users[row[0]])]])
+  API.getPlugin('google-sheets').select('users!A:Z', (err, rows) => {
+    if(err) return
+    const toAdd = rows ? Object.keys(users).filter(key => rows.find(row => row[0] == key) == undefined) : Object.keys(users)
+    API.getPlugin('google-sheets').insert('users!A:Z', toAdd.map(key => [key, JSON.stringify(users[key])]))
   })
 }
 
 const loadGroups = function() {
-  API.getPlugin('google-sheets').select('users!A2:A2', (err, rows) => {
-    groups = JSON.parse(rows[0])
+  API.getPlugin('google-sheets').select('groups!A:Z', (err, rows) => {
+    if(err || !rows) return
+    rows.forEach(row => {
+      groups[row[0]] = JSON.parse(row[1])
+    })
+  })
+}
+
+const storeGroups = function() {
+  API.getPlugin('google-sheets').update('groups!A:Z', (row, index) => [[row[0], JSON.stringify(groups[row[0]])]])
+  API.getPlugin('google-sheets').select('groups!A:Z', (err, rows) => {
+    if(err) return
+    const toAdd = rows ? Object.keys(groups).filter(key => rows.find(row => row[0] == key) == undefined) : Object.keys(groups)
+    API.getPlugin('google-sheets').insert('groups!A:Z', toAdd.map(key => [key, JSON.stringify(groups[key])]))
   })
 }
