@@ -33,6 +33,8 @@ let listeners = {
   stream: {},
   read: {}
 }
+
+let botConfigs = {}
 let userConfigs = {}
 let groupConfigs = {}
 
@@ -42,6 +44,9 @@ let groups = {}
 const API = {
   getConfig: function(key) {
     return config[key]
+  },
+  getBotConfig: function(key) {
+    return botConfigs[key]
   },
   getPlugin: function(name) {
     return plugins[name].api
@@ -383,8 +388,18 @@ const initPlugins = function() {
     if(plugin.localeDir) API.getPlugin('i18n').load(plugin.dir + plugin.localeDir)
     if(plugin.api && plugin.api.init) plugin.api.init()
   }
+  loadBotConfig()
   loadUsers()
   loadGroups()
+}
+
+const loadBotConfig = function() {
+  API.getPlugin('google-sheets').select('config!A:Z', (err, rows) => {
+    if(err || !rows) return
+    rows.forEach(row => {
+      botConfigs[row[0]] = JSON.parse(row[1])
+    })
+  })
 }
 
 const loadUsers = function() {
